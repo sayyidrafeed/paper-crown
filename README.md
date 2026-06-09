@@ -19,7 +19,7 @@ JavaFX Desktop  ──REST──>  Spring Boot Backend  ──>  PostgreSQL
 | Shared Contracts | Multi-module Gradle project |
 | Testing | JUnit 5, Mockito |
 
-> Runtime note: project ini bisa dijalankan dengan Java 26. Source/bytecode tetap ditargetkan ke Java 21 agar kompatibel dengan Spring Boot 3.4.3.
+> Runtime note: project ini bisa dijalankan dengan Java 21. Source/bytecode tetap ditargetkan ke Java 21 agar kompatibel dengan Spring Boot 3.4.3.
 
 ## Prerequisites
 
