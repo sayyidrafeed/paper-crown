@@ -4,11 +4,13 @@ import com.papercrown.desktop.service.BackendClient;
 import com.papercrown.desktop.util.AudioManager;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.util.concurrent.Executors;
@@ -30,9 +32,12 @@ public class MainView extends BorderPane {
     private final SidebarItem achievementsItem;
     private final SidebarItem settingsItem;
     private SidebarItem activeNavItem;
+    private final Stage primaryStage;
+    private final SimpleBooleanProperty animationEnabled = new SimpleBooleanProperty(true);
     private ScheduledExecutorService healthScheduler;
 
-    public MainView() {
+    public MainView(Stage primaryStage) {
+        this.primaryStage = primaryStage;
         rootStack = new StackPane();
 
         BorderPane mainLayout = new BorderPane();
@@ -148,20 +153,24 @@ public class MainView extends BorderPane {
     private void fadeInContent(javafx.scene.Node content) {
         content.setOpacity(0);
         contentArea.getChildren().setAll(content);
-        FadeTransition ft = new FadeTransition(Duration.millis(200), content);
-        ft.setFromValue(0);
-        ft.setToValue(1);
-        ft.play();
+        if (animationEnabled.get()) {
+            FadeTransition ft = new FadeTransition(Duration.millis(200), content);
+            ft.setFromValue(0);
+            ft.setToValue(1);
+            ft.play();
+        } else {
+            content.setOpacity(1);
+        }
     }
 
     public void showDashboard() {
         setActiveNav(dashboardItem);
-        fadeInContent(new DashboardView(backendClient, audioManager, this::showPlay, this::showDashboard));
+        fadeInContent(new DashboardView(backendClient, audioManager, this::showPlay, this::showDashboard, animationEnabled));
     }
 
     public void showPlay(Long runId) {
         setActiveNav(playItem);
-        fadeInContent(new PlayView(backendClient, audioManager, runId, this::showDashboard));
+        fadeInContent(new PlayView(backendClient, audioManager, runId, this::showDashboard, animationEnabled));
     }
 
     public void showHistory() {
@@ -176,6 +185,8 @@ public class MainView extends BorderPane {
 
     public void showSettings() {
         setActiveNav(settingsItem);
-        fadeInContent(new SettingsView(backendClient, audioManager));
+        fadeInContent(new SettingsView(backendClient, audioManager,
+                val -> primaryStage.setFullScreen(val),
+                val -> animationEnabled.set(val)));
     }
 }

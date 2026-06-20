@@ -12,7 +12,7 @@ public class PaperCrownApp extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        var mainView = new com.papercrown.desktop.view.MainView();
+        var mainView = new com.papercrown.desktop.view.MainView(primaryStage);
         Scene scene = new Scene(mainView, 1280, 800);
 
         scene.getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());

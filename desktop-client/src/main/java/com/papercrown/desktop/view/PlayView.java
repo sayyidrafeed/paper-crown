@@ -11,6 +11,7 @@ import com.papercrown.shared.dto.RunDTO;
 import com.papercrown.shared.enums.Move;
 import com.papercrown.shared.enums.RoundOutcome;
 import javafx.animation.*;
+import javafx.beans.value.ObservableBooleanValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -25,6 +26,7 @@ public class PlayView extends VBox {
     private final AudioManager audioManager;
     private final Runnable onNavigateToDashboard;
     private final StackPane rootStack;
+    private final ObservableBooleanValue animationEnabled;
 
     private HBox hpRow;
     private Label roundInfo;
@@ -36,13 +38,12 @@ public class PlayView extends VBox {
     private Label noBuffsLabel;
     private VBox buffModal;
     private VBox runSummary;
-    private Label errorToast;
-    private PauseTransition errorFade;
 
-    public PlayView(BackendClient client, AudioManager audioManager, Long runId, Runnable onNavigateToDashboard) {
+    public PlayView(BackendClient client, AudioManager audioManager, Long runId, Runnable onNavigateToDashboard, ObservableBooleanValue animationEnabled) {
         this.vm = new PlayViewModel(client);
         this.audioManager = audioManager;
         this.onNavigateToDashboard = onNavigateToDashboard;
+        this.animationEnabled = animationEnabled;
 
         rootStack = new StackPane();
 
@@ -130,22 +131,6 @@ public class PlayView extends VBox {
 
         rootStack.getChildren().add(mainWithModal);
 
-        errorToast = new Label();
-        errorToast.getStyleClass().addAll("toast", "toast-error");
-        errorToast.setVisible(false);
-        errorToast.setManaged(false);
-        errorFade = new PauseTransition(Duration.seconds(3));
-        errorFade.setOnFinished(e -> {
-            FadeTransition ft = new FadeTransition(Duration.millis(300), errorToast);
-            ft.setToValue(0);
-            ft.setOnFinished(ev -> errorToast.setVisible(false));
-            ft.play();
-        });
-
-        StackPane.setAlignment(errorToast, Pos.TOP_RIGHT);
-        StackPane.setMargin(errorToast, new Insets(16, 16, 0, 0));
-        rootStack.getChildren().add(errorToast);
-
         getChildren().add(rootStack);
 
         bindViewModel();
@@ -166,7 +151,10 @@ public class PlayView extends VBox {
         vm.activeBuffs.addListener((obs, old, val) -> updateActiveBuffs(val));
         vm.roundHistory.addListener((obs, old, val) -> updateHistory(val));
         vm.runEnded.addListener((obs, old, val) -> {
-            if (val) showRunSummary();
+            if (val) {
+                Toast.show(rootStack, "Run completed! Returning to dashboard...", Toast.Type.INFO);
+                showRunSummary();
+            }
         });
         vm.error.addListener((obs, old, val) -> {
             if (val) showError("Network error. Try again.");
@@ -217,6 +205,8 @@ public class PlayView extends VBox {
     }
 
     private void animateWin() {
+        if (!animationEnabled.get()) return;
+
         ScaleTransition st = new ScaleTransition(Duration.millis(300), resultSection);
         st.setFromX(1);
         st.setFromY(1);
@@ -225,9 +215,33 @@ public class PlayView extends VBox {
         st.setAutoReverse(true);
         st.setCycleCount(2);
         st.play();
+
+        Label plusOne = new Label("+1");
+        plusOne.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #4a7c8c;");
+        StackPane.setAlignment(plusOne, Pos.TOP_CENTER);
+        StackPane.setMargin(plusOne, new Insets(16, 0, 0, 0));
+        rootStack.getChildren().add(plusOne);
+
+        TranslateTransition floatUp = new TranslateTransition(Duration.millis(800), plusOne);
+        floatUp.setFromY(0);
+        floatUp.setToY(-60);
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(800), plusOne);
+        fadeOut.setFromValue(1);
+        fadeOut.setToValue(0);
+        ParallelTransition floatAnim = new ParallelTransition(floatUp, fadeOut);
+        floatAnim.setOnFinished(e -> rootStack.getChildren().remove(plusOne));
+        floatAnim.play();
     }
 
     private void animateLoss() {
+        if (!animationEnabled.get()) {
+            resultSection.setStyle("-fx-background-color: rgba(139,47,58,0.3); -fx-background-radius: 12;");
+            PauseTransition reset = new PauseTransition(Duration.millis(300));
+            reset.setOnFinished(e -> resultSection.setStyle(""));
+            reset.play();
+            return;
+        }
+
         TranslateTransition tt = new TranslateTransition(Duration.millis(50), hpRow);
         tt.setFromX(0);
         tt.setToX(10);
@@ -266,25 +280,28 @@ public class PlayView extends VBox {
         for (BuffDTO buff : choices) {
             BuffCard card = new BuffCard(buff);
             card.setOnMouseClicked(e -> vm.selectBuff(buff.getId()));
-            card.setScaleX(0.8);
-            card.setScaleY(0.8);
-            ScaleTransition st = new ScaleTransition(Duration.millis(200), card);
-            st.setToX(1);
-            st.setToY(1);
-            st.play();
 
-            card.setOnMouseEntered(e -> {
-                ScaleTransition hover = new ScaleTransition(Duration.millis(100), card);
-                hover.setToX(1.05);
-                hover.setToY(1.05);
-                hover.play();
-            });
-            card.setOnMouseExited(e -> {
-                ScaleTransition unhover = new ScaleTransition(Duration.millis(100), card);
-                unhover.setToX(1);
-                unhover.setToY(1);
-                unhover.play();
-            });
+            if (animationEnabled.get()) {
+                card.setScaleX(0.8);
+                card.setScaleY(0.8);
+                ScaleTransition st = new ScaleTransition(Duration.millis(200), card);
+                st.setToX(1);
+                st.setToY(1);
+                st.play();
+
+                card.setOnMouseEntered(e -> {
+                    ScaleTransition hover = new ScaleTransition(Duration.millis(100), card);
+                    hover.setToX(1.05);
+                    hover.setToY(1.05);
+                    hover.play();
+                });
+                card.setOnMouseExited(e -> {
+                    ScaleTransition unhover = new ScaleTransition(Duration.millis(100), card);
+                    unhover.setToX(1);
+                    unhover.setToY(1);
+                    unhover.play();
+                });
+            }
 
             cards.getChildren().add(card);
         }
@@ -388,16 +405,21 @@ public class PlayView extends VBox {
     private void showRunSummary() {
         runSummary.setVisible(true);
         runSummary.setManaged(true);
-        runSummary.setOpacity(0);
-        FadeTransition ft = new FadeTransition(Duration.millis(500), runSummary);
-        ft.setToValue(1);
-        ft.play();
+        if (animationEnabled.get()) {
+            runSummary.setOpacity(0);
+            FadeTransition ft = new FadeTransition(Duration.millis(500), runSummary);
+            ft.setToValue(1);
+            ft.play();
+        } else {
+            runSummary.setOpacity(1);
+        }
+
+        PauseTransition autoReturn = new PauseTransition(Duration.seconds(3));
+        autoReturn.setOnFinished(e -> onNavigateToDashboard.run());
+        autoReturn.play();
     }
 
     private void showError(String msg) {
-        errorToast.setText(msg);
-        errorToast.setOpacity(1);
-        errorToast.setVisible(true);
-        errorFade.playFromStart();
+        Toast.show(rootStack, msg, Toast.Type.ERROR);
     }
 }

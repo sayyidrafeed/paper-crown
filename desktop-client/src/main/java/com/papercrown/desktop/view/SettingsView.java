@@ -12,12 +12,16 @@ import javafx.scene.layout.VBox;
 import org.kordamp.ikonli.fontawesome5.FontAwesomeSolid;
 import org.kordamp.ikonli.javafx.FontIcon;
 
+import java.util.function.Consumer;
+
 public class SettingsView extends VBox {
 
     private final SettingsViewModel vm;
+    private final Consumer<Boolean> onFullscreenToggle;
 
-    public SettingsView(BackendClient client, AudioManager audioManager) {
+    public SettingsView(BackendClient client, AudioManager audioManager, Consumer<Boolean> onFullscreenToggle, Consumer<Boolean> onAnimationChanged) {
         this.vm = new SettingsViewModel(client, audioManager);
+        this.onFullscreenToggle = onFullscreenToggle;
 
         getStyleClass().add("page-view");
         setPadding(new Insets(32));
@@ -37,6 +41,9 @@ public class SettingsView extends VBox {
         );
 
         getChildren().addAll(title, settingsList);
+
+        vm.fullscreen.addListener((obs, old, val) -> onFullscreenToggle.accept(val));
+        vm.animationEnabled.addListener((obs, old, val) -> onAnimationChanged.accept(val));
 
         vm.load();
     }

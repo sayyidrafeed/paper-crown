@@ -10,6 +10,7 @@ import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
+import javafx.beans.value.ObservableBooleanValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -33,6 +34,7 @@ public class DashboardView extends VBox {
     private final AudioManager audioManager;
     private final Consumer<Long> onNavigateToPlay;
     private final Runnable onNavigateToDashboard;
+    private final ObservableBooleanValue animationEnabled;
     private HBox statsRow;
     private VBox chartsArea;
     private VBox recentRunsArea;
@@ -42,11 +44,12 @@ public class DashboardView extends VBox {
     private Label noAchievementsLabel;
     private Label resumeBtn;
 
-    public DashboardView(BackendClient client, AudioManager audioManager, Consumer<Long> onNavigateToPlay, Runnable onNavigateToDashboard) {
+    public DashboardView(BackendClient client, AudioManager audioManager, Consumer<Long> onNavigateToPlay, Runnable onNavigateToDashboard, ObservableBooleanValue animationEnabled) {
         this.vm = new DashboardViewModel(client);
         this.audioManager = audioManager;
         this.onNavigateToPlay = onNavigateToPlay;
         this.onNavigateToDashboard = onNavigateToDashboard;
+        this.animationEnabled = animationEnabled;
 
         getStyleClass().add("page-view");
         setPadding(new Insets(32));
@@ -183,6 +186,7 @@ public class DashboardView extends VBox {
     }
 
     private void animateCardEntrance() {
+        if (!animationEnabled.get()) return;
         for (int i = 0; i < statsRow.getChildren().size(); i++) {
             var card = statsRow.getChildren().get(i);
             card.setTranslateY(30);

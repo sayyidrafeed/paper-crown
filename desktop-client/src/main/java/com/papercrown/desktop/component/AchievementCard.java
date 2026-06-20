@@ -36,13 +36,13 @@ public class AchievementCard extends VBox {
         getChildren().addAll(icon, nameLabel, descLabel);
 
         if (dto.isUnlocked()) {
-            getStyleClass().add("achievement-unlocked");
+            getStyleClass().add("achievement-card-unlocked");
             FontIcon check = new FontIcon(FontAwesomeSolid.CHECK_CIRCLE);
             check.setIconSize(20);
             check.getStyleClass().add("achievement-checkmark");
             getChildren().add(check);
         } else if (dto.getProgress() > 0) {
-            getStyleClass().add("achievement-progress");
+            getStyleClass().add("achievement-card-progress");
             ProgressBar bar = new ProgressBar(
                     (double) dto.getProgress() / Math.max(dto.getCriteriaValue(), 1));
             bar.setPrefWidth(120);
@@ -51,7 +51,7 @@ public class AchievementCard extends VBox {
             progressLabel.getStyleClass().add("achievement-progress-text");
             getChildren().addAll(bar, progressLabel);
         } else {
-            getStyleClass().add("achievement-locked");
+            getStyleClass().add("achievement-card-locked");
         }
     }
 
