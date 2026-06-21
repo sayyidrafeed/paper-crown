@@ -14,6 +14,9 @@ public class CorsConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
+        // WARNING: Allowing all origins (*) is designed specifically for ease of local-first
+        // desktop/development environments. If this service is deployed to a cloud server,
+        // this configuration must be restricted to specific trusted origins for security.
         config.setAllowedOrigins(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));

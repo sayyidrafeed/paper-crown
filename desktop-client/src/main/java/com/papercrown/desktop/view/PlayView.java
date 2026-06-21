@@ -48,7 +48,6 @@ public class PlayView extends VBox {
         rootStack = new StackPane();
 
         VBox mainContent = new VBox(24);
-        mainContent.setPadding(new Insets(32));
         mainContent.setAlignment(Pos.TOP_CENTER);
         mainContent.getStyleClass().add("page-view");
 
@@ -111,7 +110,13 @@ public class PlayView extends VBox {
 
         ScrollPane scrollContent = new ScrollPane();
         scrollContent.setFitToWidth(true);
+        scrollContent.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollContent.setStyle("-fx-background-color: transparent; -fx-control-inner-background: transparent;");
+        VBox.setVgrow(scrollContent, Priority.ALWAYS);
+
         VBox content = new VBox(24);
+        content.setPadding(new Insets(32));
+        content.setAlignment(Pos.TOP_CENTER);
         content.getChildren().addAll(title, hpSection, moveSection, resultSection, buffSection, historySection);
         scrollContent.setContent(content);
 

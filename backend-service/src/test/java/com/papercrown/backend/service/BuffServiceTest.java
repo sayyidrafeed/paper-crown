@@ -34,7 +34,7 @@ class BuffServiceTest {
     void setUp() {
         mapper = new EntityMapper();
         buffService = new BuffService(buffRepository, runBuffRepository, mapper);
-        buffService.setSeed(42);
+        buffService.setRandomForTesting(new java.util.Random(42));
     }
 
     @Test

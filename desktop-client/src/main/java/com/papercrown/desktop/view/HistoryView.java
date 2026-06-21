@@ -19,8 +19,6 @@ public class HistoryView extends VBox {
         this.vm = new HistoryViewModel(client);
 
         getStyleClass().add("page-view");
-        setPadding(new Insets(32));
-        setSpacing(16);
 
         Label title = new Label("History");
         title.getStyleClass().add("page-title");
@@ -32,7 +30,12 @@ public class HistoryView extends VBox {
 
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setStyle("-fx-background-color: transparent; -fx-control-inner-background: transparent;");
+        VBox.setVgrow(scrollPane, javafx.scene.layout.Priority.ALWAYS);
+
         VBox content = new VBox(16);
+        content.setPadding(new Insets(32));
         content.getChildren().addAll(title, emptyLabel, runList);
         scrollPane.setContent(content);
 

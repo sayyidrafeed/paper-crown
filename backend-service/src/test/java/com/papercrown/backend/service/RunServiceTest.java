@@ -43,10 +43,10 @@ class RunServiceTest {
         statsService = mock(StatsService.class);
         achievementService = mock(AchievementService.class);
         gameEngine = new GameEngine();
-        gameEngine.setSeed(42);
+        gameEngine.setRandomForTesting(new java.util.Random(42));
         mapper = new EntityMapper();
         buffService = new BuffService(buffRepository, runBuffRepository, mapper);
-        buffService.setSeed(42);
+        buffService.setRandomForTesting(new java.util.Random(42));
         runService = new RunService(runRepository, roundRepository, buffRepository, runBuffRepository,
                 gameEngine, buffService, achievementService, statsService, mapper);
     }
@@ -93,13 +93,13 @@ class RunServiceTest {
         when(roundRepository.save(any(RoundEntity.class))).thenAnswer(i -> i.getArgument(0));
 
         // Force bot to play SCISSORS so player ROCK wins
-        gameEngine.setSeed(0);
+        gameEngine.setRandomForTesting(new java.util.Random(0));
         // Find a seed where bot plays SCISSORS
         for (long seed = 0; seed < 1000; seed++) {
-            gameEngine.setSeed(seed);
+            gameEngine.setRandomForTesting(new java.util.Random(seed));
             Move botMove = gameEngine.randomBotMove();
             if (botMove == Move.SCISSORS) {
-                gameEngine.setSeed(seed);
+                gameEngine.setRandomForTesting(new java.util.Random(seed));
                 break;
             }
         }
@@ -126,10 +126,10 @@ class RunServiceTest {
 
         // Force bot to play ROCK so player ROCK draws
         for (long seed = 0; seed < 1000; seed++) {
-            gameEngine.setSeed(seed);
+            gameEngine.setRandomForTesting(new java.util.Random(seed));
             Move botMove = gameEngine.randomBotMove();
             if (botMove == Move.ROCK) {
-                gameEngine.setSeed(seed);
+                gameEngine.setRandomForTesting(new java.util.Random(seed));
                 break;
             }
         }
@@ -157,10 +157,10 @@ class RunServiceTest {
 
         // Force bot to play SCISSORS so player ROCK wins
         for (long seed = 0; seed < 1000; seed++) {
-            gameEngine.setSeed(seed);
+            gameEngine.setRandomForTesting(new java.util.Random(seed));
             Move botMove = gameEngine.randomBotMove();
             if (botMove == Move.SCISSORS) {
-                gameEngine.setSeed(seed);
+                gameEngine.setRandomForTesting(new java.util.Random(seed));
                 break;
             }
         }
@@ -186,10 +186,10 @@ class RunServiceTest {
 
         // Force bot to play PAPER so player ROCK loses
         for (long seed = 0; seed < 1000; seed++) {
-            gameEngine.setSeed(seed);
+            gameEngine.setRandomForTesting(new java.util.Random(seed));
             Move botMove = gameEngine.randomBotMove();
             if (botMove == Move.PAPER) {
-                gameEngine.setSeed(seed);
+                gameEngine.setRandomForTesting(new java.util.Random(seed));
                 break;
             }
         }

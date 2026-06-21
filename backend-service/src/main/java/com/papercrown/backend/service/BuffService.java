@@ -22,7 +22,7 @@ public class BuffService {
     private final BuffRepository buffRepository;
     private final RunBuffRepository runBuffRepository;
     private final EntityMapper mapper;
-    private final Random random = new Random();
+    private Random random = new java.security.SecureRandom();
 
     public BuffService(BuffRepository buffRepository, RunBuffRepository runBuffRepository,
                        EntityMapper mapper) {
@@ -67,7 +67,7 @@ public class BuffService {
         run.getRunBuffs().add(runBuff);
     }
 
-    public void setSeed(long seed) {
-        random.setSeed(seed);
+    void setRandomForTesting(Random random) {
+        this.random = random;
     }
 }

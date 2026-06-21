@@ -35,11 +35,11 @@ public class DashboardView extends VBox {
     private final Consumer<Long> onNavigateToPlay;
     private final Runnable onNavigateToDashboard;
     private final ObservableBooleanValue animationEnabled;
-    private HBox statsRow;
+    private FlowPane statsRow;
     private VBox chartsArea;
     private VBox recentRunsArea;
-    private HBox achievementsArea;
-    private HBox actions;
+    private FlowPane achievementsArea;
+    private FlowPane actions;
     private Label noRunsLabel;
     private Label noAchievementsLabel;
     private Label resumeBtn;
@@ -52,19 +52,17 @@ public class DashboardView extends VBox {
         this.animationEnabled = animationEnabled;
 
         getStyleClass().add("page-view");
-        setPadding(new Insets(32));
-        setSpacing(24);
 
         Label title = new Label("Dashboard");
         title.getStyleClass().add("page-title");
 
-        statsRow = new HBox(16);
+        statsRow = new FlowPane(16, 16);
         chartsArea = new VBox(16);
 
         Label quickActions = new Label("Quick Actions");
         quickActions.getStyleClass().add("section-title");
 
-        actions = new HBox(16);
+        actions = new FlowPane(16, 16);
 
         recentRunsArea = new VBox(8);
         Label recentLabel = new Label("Recent Runs");
@@ -76,11 +74,16 @@ public class DashboardView extends VBox {
         achievementsLabel.getStyleClass().add("section-title");
         noAchievementsLabel = new Label("No achievements yet.");
         noAchievementsLabel.getStyleClass().add("empty-state");
-        achievementsArea = new HBox(12);
+        achievementsArea = new FlowPane(12, 12);
 
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setStyle("-fx-background-color: transparent; -fx-control-inner-background: transparent;");
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+
         VBox content = new VBox(16);
+        content.setPadding(new Insets(32));
         content.getChildren().addAll(title, statsRow, quickActions, actions, recentLabel, noRunsLabel, recentRunsArea, achievementsLabel, noAchievementsLabel, achievementsArea, chartsArea);
         scrollPane.setContent(content);
 
@@ -114,7 +117,7 @@ public class DashboardView extends VBox {
         );
 
         chartsArea.getChildren().clear();
-        HBox chartRow = new HBox(16);
+        FlowPane chartRow = new FlowPane(16, 16);
         chartRow.getChildren().addAll(
                 createMoveUsageChart(stats.getMoveUsage()),
                 createWinTrendChart(),

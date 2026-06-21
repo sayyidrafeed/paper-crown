@@ -38,6 +38,9 @@ public class SettingsController {
 
     @PutMapping("/{key}")
     public ResponseEntity<Void> updateSetting(@PathVariable String key, @RequestBody String value) {
+        if (value != null && value.startsWith("\"") && value.endsWith("\"")) {
+            value = value.substring(1, value.length() - 1);
+        }
         settingsService.updateSetting(key, value);
         return ResponseEntity.ok().build();
     }

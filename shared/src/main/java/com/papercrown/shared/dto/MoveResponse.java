@@ -1,6 +1,5 @@
 package com.papercrown.shared.dto;
 
-import com.papercrown.shared.enums.Move;
 import com.papercrown.shared.enums.RoundOutcome;
 import java.util.List;
 

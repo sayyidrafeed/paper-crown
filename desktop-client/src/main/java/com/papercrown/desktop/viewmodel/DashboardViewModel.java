@@ -5,6 +5,7 @@ import com.papercrown.shared.dto.AchievementDTO;
 import com.papercrown.shared.dto.RunDTO;
 import com.papercrown.shared.dto.StatsDTO;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 
 import java.util.List;
@@ -23,21 +24,32 @@ public class DashboardViewModel {
     public final SimpleObjectProperty<List<RunDTO>> recentRuns = new SimpleObjectProperty<>(List.of());
     public final SimpleObjectProperty<List<AchievementDTO>> achievements = new SimpleObjectProperty<>(List.of());
     public final SimpleObjectProperty<RunDTO> unfinishedRun = new SimpleObjectProperty<>();
+    public final SimpleBooleanProperty error = new SimpleBooleanProperty(false);
 
     public DashboardViewModel(BackendClient client) {
         this.client = client;
     }
 
     public void load() {
+        error.set(false);
         executor.execute(() -> {
-            try { Platform.runLater(() -> stats.set(client.getStats())); } catch (Exception ignored) {}
+            try {
+                StatsDTO result = client.getStats();
+                Platform.runLater(() -> stats.set(result));
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> error.set(true));
+            }
         });
         executor.execute(() -> {
             try {
                 List<RunDTO> runs = client.getAllRuns();
                 List<RunDTO> recent = runs.size() > 5 ? runs.subList(0, 5) : runs;
                 Platform.runLater(() -> recentRuns.set(recent));
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> error.set(true));
+            }
         });
         executor.execute(() -> {
             try {
@@ -46,13 +58,19 @@ public class DashboardViewModel {
                         .filter(AchievementDTO::isUnlocked)
                         .toList();
                 Platform.runLater(() -> achievements.set(unlocked));
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> error.set(true));
+            }
         });
         executor.execute(() -> {
             try {
                 RunDTO run = client.getUnfinishedRun();
                 Platform.runLater(() -> unfinishedRun.set(run));
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> error.set(true));
+            }
         });
     }
 
@@ -62,8 +80,13 @@ public class DashboardViewModel {
                 RunDTO run = client.startRun();
                 Platform.runLater(() -> onRunCreated.accept(run.getId()));
             } catch (Exception e) {
+                e.printStackTrace();
                 Platform.runLater(() -> onRunCreated.accept(null));
             }
         });
+    }
+
+    public void shutdown() {
+        executor.shutdown();
     }
 }

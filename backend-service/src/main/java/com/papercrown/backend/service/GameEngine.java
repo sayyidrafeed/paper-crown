@@ -16,7 +16,7 @@ public class GameEngine {
             Move.PAPER, Move.ROCK
     );
 
-    private final Random random = new Random();
+    private Random random = new java.security.SecureRandom();
 
     public RoundOutcome resolve(Move playerMove, Move botMove) {
         if (playerMove == botMove) {
@@ -30,7 +30,8 @@ public class GameEngine {
         return moves[random.nextInt(moves.length)];
     }
 
-    public void setSeed(long seed) {
-        random.setSeed(seed);
+    void setRandomForTesting(Random random) {
+        this.random = random;
     }
 }
+
