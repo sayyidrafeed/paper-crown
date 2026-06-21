@@ -96,12 +96,12 @@ class GameEngineTest {
     @Test
     void rockVsPaperIsLoss() {
         assertEquals(RoundOutcome.LOSS, engine.resolve(Move.ROCK, Move.PAPER),
-                "Rock vs Paper harus menghasilkan LOSS untuk player");
+                "Rock vs Paper should result in LOSS for the player");
     }
 
     @Test
     void paperVsRockIsWin() {
         assertEquals(RoundOutcome.WIN, engine.resolve(Move.PAPER, Move.ROCK),
-                "Paper vs Rock harus menghasilkan WIN untuk player");
+                "Paper vs Rock should result in WIN for the player");
     }
 }
