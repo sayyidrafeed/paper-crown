@@ -40,6 +40,10 @@
     -fx-text-fill: #d4d4dc;
 }
 
+.sidebar-item-hover .sidebar-icon {
+    -fx-icon-color: #d4d4dc;
+}
+
 .sidebar-item-active {
     -fx-background-color: #2a2a3e;
     -fx-text-fill: #c9a84c;
@@ -50,13 +54,17 @@
     -fx-font-weight: bold;
 }
 
+.sidebar-item-active .sidebar-icon {
+    -fx-icon-color: #c9a84c;
+}
+
 .sidebar-label {
     -fx-font-size: 14px;
 }
 
 .sidebar-icon {
     -fx-font-size: 18px;
-    -fx-font-family: "Font Awesome 5 Free";
+    -fx-icon-color: #8888a0;
 }
 
 /* === Content Area === */
