@@ -168,7 +168,7 @@ public class PlayView extends VBox {
         hpRow.getChildren().clear();
         for (int i = 0; i < max; i++) {
             Label heart = new Label(i < current ? "\u2764" : "\u2661");
-            heart.setStyle("-fx-font-size: 28px; -fx-text-fill: " + (i < current ? "#8b2f3a" : "#3a3a4a") + ";");
+            heart.setStyle("-fx-font-size: 28px; -fx-text-fill: " + (i < current ? "#e65c6c" : "#525266") + ";");
             hpRow.getChildren().add(heart);
         }
     }
@@ -216,7 +216,7 @@ public class PlayView extends VBox {
         st.play();
 
         Label plusOne = new Label("+1");
-        plusOne.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #4a7c8c;");
+        plusOne.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #61a5c2;");
         StackPane.setAlignment(plusOne, Pos.TOP_CENTER);
         StackPane.setMargin(plusOne, new Insets(16, 0, 0, 0));
         rootStack.getChildren().add(plusOne);
@@ -347,8 +347,8 @@ public class PlayView extends VBox {
                     case DRAW -> "\u2014";
                 };
                 String outcomeColor = switch (round.getOutcome()) {
-                    case WIN -> "#4a7c8c";
-                    case LOSS -> "#8b2f3a";
+                    case WIN -> "#61a5c2";
+                    case LOSS -> "#e65c6c";
                     case DRAW -> "#c9a84c";
                 };
 

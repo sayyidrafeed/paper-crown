@@ -85,6 +85,10 @@ public class RunService {
             throw new IllegalStateException("Run is already completed");
         }
 
+        if (playerMove == null) {
+            throw new IllegalArgumentException("Player move cannot be null");
+        }
+
         Move botMove = gameEngine.randomBotMove();
         RoundOutcome originalOutcome = gameEngine.resolve(playerMove, botMove);
         RoundOutcome effectiveOutcome = originalOutcome;
