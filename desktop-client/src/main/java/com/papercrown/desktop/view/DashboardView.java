@@ -109,7 +109,7 @@ public class DashboardView extends VBox {
                 createStatCard("Total Wins", String.valueOf(stats.getTotalWins()), "gold"),
                 createStatCard("Total Losses", String.valueOf(stats.getTotalLosses()), "red"),
                 createStatCard("Total Draws", String.valueOf(stats.getTotalDraws()), "purple"),
-                createStatCard("Win Rate", String.format("%.1f%%", stats.getWinRate() * 100), "gold"),
+                createStatCard("Win Rate", String.format("%.1f%%", stats.getWinRate()), "gold"),
                 createStatCard("Best Streak", String.valueOf(stats.getBestStreak()), "blue")
         );
 
