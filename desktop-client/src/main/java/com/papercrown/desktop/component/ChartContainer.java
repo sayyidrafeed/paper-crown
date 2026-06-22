@@ -43,6 +43,14 @@ public class ChartContainer extends StackPane {
         chart.setAntiAlias(true);
         chart.setTextAntiAlias(true);
 
+        if (chart.getTitle() != null) {
+            chart.getTitle().setPaint(new Color(232, 232, 240));
+        }
+        if (chart.getLegend() != null) {
+            chart.getLegend().setBackgroundPaint(BG_COLOR);
+            chart.getLegend().setItemPaint(new Color(232, 232, 240));
+        }
+
         Plot plot = chart.getPlot();
         if (plot != null) {
             plot.setBackgroundPaint(BG_COLOR);
