@@ -160,6 +160,19 @@ public class RunService {
         return response;
     }
 
+    public void abandonRun(Long runId) {
+        int updated = runRepository.updateStatus(runId, RunStatus.IN_PROGRESS, RunStatus.ABANDONED, LocalDateTime.now());
+        if (updated == 0) {
+            RunEntity run = runRepository.findById(runId)
+                    .orElseThrow(() -> new NoSuchElementException("Run not found: " + runId));
+            if (run.getStatus() != RunStatus.IN_PROGRESS) {
+                // Already completed or abandoned — no-op
+                return;
+            }
+            throw new NoSuchElementException("Run not found: " + runId);
+        }
+    }
+
     private MoveResponse endRun(RunEntity run, MoveResponse response) {
         run.setStatus(RunStatus.COMPLETED);
         run.setEndedAt(LocalDateTime.now());

@@ -2,6 +2,7 @@ package com.papercrown.desktop.view;
 
 import com.papercrown.desktop.service.BackendClient;
 import com.papercrown.desktop.util.AudioManager;
+import com.papercrown.shared.dto.RunDTO;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -88,7 +89,20 @@ public class MainView extends BorderPane {
         SidebarItem settingsItem = new SidebarItem("Settings", "mdi2c:cog");
 
         dashboardItem.setOnAction(e -> { audioManager.play("click"); showDashboard(); });
-        playItem.setOnAction(e -> { audioManager.play("click"); showPlay(null); });
+        playItem.setOnAction(e -> {
+            audioManager.play("click");
+            new Thread(() -> {
+                Long id = null;
+                try {
+                    RunDTO unfinished = backendClient.getUnfinishedRun();
+                    if (unfinished != null) id = unfinished.getId();
+                } catch (Exception ex) {
+                    // ignore — will fall back to start overlay
+                }
+                final Long targetId = id;
+                Platform.runLater(() -> showPlay(targetId));
+            }, "play-nav").start();
+        });
         historyItem.setOnAction(e -> { audioManager.play("click"); showHistory(); });
         achievementsItem.setOnAction(e -> { audioManager.play("click"); showAchievements(); });
         settingsItem.setOnAction(e -> { audioManager.play("click"); showSettings(); });

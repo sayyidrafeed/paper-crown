@@ -43,6 +43,7 @@ public class PlayView extends VBox {
     private VBox runSummary;
     private VBox mainContent;
     private VBox startRunOverlay;
+    private VBox resumeRunOverlay;
 
     public PlayView(BackendClient client, AudioManager audioManager, Long runId, Runnable onNavigateToDashboard, ObservableBooleanValue animationEnabled) {
         this.vm = new PlayViewModel(client);
@@ -71,7 +72,7 @@ public class PlayView extends VBox {
         leaveBtn.setStyle("-fx-padding: 8 16; -fx-font-size: 13px;");
         leaveBtn.setOnMouseClicked(e -> {
             audioManager.play("click");
-            navigateAway();
+            vm.abandonRun(this::navigateAway);
         });
 
         header.getChildren().addAll(title, spacer, leaveBtn);
@@ -200,19 +201,29 @@ public class PlayView extends VBox {
         runSummary.setManaged(false);
 
         startRunOverlay = createStartRunOverlay();
+        resumeRunOverlay = createResumeRunOverlay();
+        resumeRunOverlay.setVisible(false);
+        resumeRunOverlay.setManaged(false);
         if (runId == null) {
             mainContent.setVisible(false);
             mainContent.setManaged(false);
             startRunOverlay.setVisible(true);
             startRunOverlay.setManaged(true);
         } else {
-            mainContent.setVisible(true);
-            mainContent.setManaged(true);
-            startRunOverlay.setVisible(false);
-            startRunOverlay.setManaged(false);
+            mainContent.setVisible(false);
+            mainContent.setManaged(false);
+            resumeRunOverlay.setVisible(true);
+            resumeRunOverlay.setManaged(true);
+
+            // If the run has no progress, skip directly to gameplay
+            vm.resumedRun.addListener((obs, old, val) -> {
+                if (val != null && val.getRoundNumber() == 0) {
+                    showGameContent();
+                }
+            });
         }
 
-        rootStack.getChildren().addAll(mainContent, startRunOverlay, buffModal, runSummary);
+        rootStack.getChildren().addAll(mainContent, startRunOverlay, resumeRunOverlay, buffModal, runSummary);
         VBox.setVgrow(rootStack, Priority.ALWAYS);
 
         getChildren().add(rootStack);
@@ -240,7 +251,10 @@ public class PlayView extends VBox {
             }
         });
         vm.error.addListener((obs, old, val) -> {
-            if (val) showError("Network error. Try again.");
+            if (val) {
+                String msg = vm.errorMessage.get();
+                showError(msg != null ? msg : "Something went wrong. Try again.");
+            }
         });
         vm.loading.addListener((obs, old, val) -> {
             moveButtons.setDisable(val);
@@ -466,6 +480,130 @@ public class PlayView extends VBox {
         card.getChildren().addAll(crownIcon, title, desc, startBtn);
         overlay.getChildren().add(card);
         return overlay;
+    }
+
+    private VBox createResumeRunOverlay() {
+        VBox overlay = new VBox();
+        overlay.setAlignment(Pos.CENTER);
+        overlay.setStyle("-fx-background-color: rgba(15,15,20,0.95);");
+        overlay.setMaxWidth(Double.MAX_VALUE);
+        overlay.setMaxHeight(Double.MAX_VALUE);
+
+        VBox card = new VBox(24);
+        card.getStyleClass().add("stat-card");
+        card.setPadding(new Insets(40));
+        card.setAlignment(Pos.CENTER);
+        card.setMaxWidth(420);
+
+        FontIcon crownIcon = new FontIcon(org.kordamp.ikonli.fontawesome5.FontAwesomeSolid.CROWN);
+        crownIcon.setIconSize(56);
+        crownIcon.setIconColor(javafx.scene.paint.Color.web("#c9a84c"));
+
+        Label title = new Label("Continue Your Journey");
+        title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #e8e8f0;");
+
+        Label desc = new Label("You have an unfinished run. The Paper Crown still awaits your challenge.");
+        desc.setStyle("-fx-font-size: 14px; -fx-text-fill: #8888a0; -fx-alignment: center;");
+        desc.setWrapText(true);
+        desc.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+
+        HBox statsRow = new HBox(16);
+        statsRow.setAlignment(Pos.CENTER);
+
+        VBox hpStat = makeResumeStat("HP", "0/0");
+        VBox roundStat = makeResumeStat("Round", "0");
+        VBox winsStat = makeResumeStat("Wins", "0");
+        VBox lossesStat = makeResumeStat("Losses", "0");
+        statsRow.getChildren().addAll(hpStat, roundStat, winsStat, lossesStat);
+
+        vm.resumedRun.addListener((obs, old, val) -> {
+            if (val == null) return;
+            Label hpVal = (Label) hpStat.getChildren().get(1);
+            hpVal.setText(val.getCurrentHp() + "/" + val.getMaxHp());
+            Label rVal = (Label) roundStat.getChildren().get(1);
+            rVal.setText(String.valueOf(val.getRoundNumber()));
+            Label wVal = (Label) winsStat.getChildren().get(1);
+            wVal.setText(String.valueOf(val.getTotalWins()));
+            Label lVal = (Label) lossesStat.getChildren().get(1);
+            lVal.setText(String.valueOf(val.getTotalLosses()));
+        });
+
+        HBox buttons = new HBox(12);
+        buttons.setAlignment(Pos.CENTER);
+
+        Button abandonBtn = new Button("Abandon & Start New");
+        abandonBtn.getStyleClass().addAll("action-button", "button-secondary");
+        abandonBtn.disableProperty().bind(vm.loading);
+        abandonBtn.setOnAction(e -> {
+            audioManager.play("click");
+            vm.abandonRun(() -> showStartOverlay());
+        });
+
+        Button continueBtn = new Button("Continue Run");
+        continueBtn.getStyleClass().addAll("action-button", "button-primary");
+        continueBtn.disableProperty().bind(vm.loading);
+        continueBtn.setOnAction(e -> {
+            audioManager.play("click");
+            showGameContent();
+        });
+
+        buttons.getChildren().addAll(abandonBtn, continueBtn);
+        card.getChildren().addAll(crownIcon, title, desc, statsRow, buttons);
+        overlay.getChildren().add(card);
+        return overlay;
+    }
+
+    private VBox makeResumeStat(String label, String defaultValue) {
+        VBox box = new VBox(4);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(12, 16, 12, 16));
+        box.setStyle("-fx-background-color: #22222e; -fx-background-radius: 8;");
+
+        Label lbl = new Label(label);
+        lbl.setStyle("-fx-font-size: 12px; -fx-text-fill: #8888a0; -fx-font-weight: bold;");
+
+        Label val = new Label(defaultValue);
+        val.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #c9a84c;");
+
+        box.getChildren().addAll(lbl, val);
+        return box;
+    }
+
+    private void showStartOverlay() {
+        mainContent.setVisible(false);
+        mainContent.setManaged(false);
+        resumeRunOverlay.setVisible(false);
+        resumeRunOverlay.setManaged(false);
+        startRunOverlay.setVisible(true);
+        startRunOverlay.setManaged(true);
+        if (animationEnabled.get()) {
+            startRunOverlay.setOpacity(0);
+            FadeTransition ft = new FadeTransition(Duration.millis(300), startRunOverlay);
+            ft.setToValue(1);
+            ft.play();
+        } else {
+            startRunOverlay.setOpacity(1);
+        }
+    }
+
+    private void showGameContent() {
+        mainContent.setVisible(true);
+        mainContent.setManaged(true);
+        startRunOverlay.setVisible(false);
+        startRunOverlay.setManaged(false);
+        if (animationEnabled.get()) {
+            FadeTransition ft = new FadeTransition(Duration.millis(300), resumeRunOverlay);
+            ft.setFromValue(1);
+            ft.setToValue(0);
+            ft.setOnFinished(ev -> {
+                resumeRunOverlay.setVisible(false);
+                resumeRunOverlay.setManaged(false);
+            });
+            ft.play();
+        } else {
+            resumeRunOverlay.setVisible(false);
+            resumeRunOverlay.setManaged(false);
+        }
     }
 
     private void updateActiveBuffs(java.util.List<BuffDTO> buffs) {

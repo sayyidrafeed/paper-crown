@@ -59,4 +59,10 @@ public class RunController {
         MoveResponse response = runService.selectBuff(id, buffId);
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> discardRun(@PathVariable Long id) {
+        runService.abandonRun(id);
+        return ResponseEntity.noContent().build();
+    }
 }

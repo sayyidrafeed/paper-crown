@@ -95,6 +95,10 @@ public class BackendClient {
         put("/settings", settings);
     }
 
+    public void discardRun(Long runId) {
+        delete("/runs/" + runId);
+    }
+
     private String get(String path) {
         try {
             HttpRequest request = HttpRequest.newBuilder()
@@ -164,6 +168,23 @@ public class BackendClient {
                     HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 throw new RuntimeException("PUT " + path + " failed: " + response.statusCode());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Backend request failed: " + e.getMessage(), e);
+        }
+    }
+
+    private void delete(String path) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + path))
+                    .timeout(TIMEOUT)
+                    .DELETE()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request,
+                    HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                throw new RuntimeException("DELETE " + path + " failed: " + response.statusCode());
             }
         } catch (Exception e) {
             throw new RuntimeException("Backend request failed: " + e.getMessage(), e);

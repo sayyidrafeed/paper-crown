@@ -31,16 +31,18 @@
 .sidebar-item {
     -fx-background-radius: 8px;
     -fx-cursor: hand;
-    -fx-text-fill: #ffffff;
     -fx-font-size: 14px;
 }
 
 .sidebar-item:hover {
     -fx-background-color: #22222e;
+}
+
+.sidebar-item:hover .sidebar-label {
     -fx-text-fill: #d4d4dc;
 }
 
-.sidebar-item-hover .sidebar-icon {
+.sidebar-item:hover .sidebar-icon {
     -fx-icon-color: #d4d4dc;
 }
 
@@ -60,6 +62,7 @@
 
 .sidebar-label {
     -fx-font-size: 14px;
+    -fx-text-fill: #8888a0;
 }
 
 .sidebar-icon {
@@ -115,10 +118,11 @@
 /* === Buttons === */
 
 .action-button {
-    -fx-padding: 12 24;
+    -fx-padding: 14 32;
     -fx-background-radius: 8px;
-    -fx-font-size: 14px;
+    -fx-font-size: 17px;
     -fx-font-weight: bold;
+    -fx-letter-spacing: 0.5px;
     -fx-cursor: hand;
 }
 
@@ -462,6 +466,75 @@
 
 .toast-message {
     -fx-font-size: 14px;
+    -fx-text-fill: #d4d4dc;
+}
+
+/* === Loading States === */
+
+.loading-overlay {
+    -fx-background-color: rgba(15, 15, 20, 0.85);
+}
+
+.loading-spinner {
+    -fx-font-size: 32px;
+    -fx-text-fill: #c9a84c;
+}
+
+.loading-text {
+    -fx-font-size: 14px;
+    -fx-text-fill: #8888a0;
+}
+
+/* === Error Banner === */
+
+.error-banner {
+    -fx-background-color: #3a1a1a;
+    -fx-background-radius: 8px;
+    -fx-border-color: #8b2f3a;
+    -fx-border-radius: 8px;
+    -fx-padding: 12 20;
+    -fx-font-size: 13px;
+    -fx-text-fill: #e0b0b4;
+    -fx-wrap-text: true;
+    -fx-cursor: hand;
+    -fx-max-width: 600;
+}
+
+.error-banner:hover {
+    -fx-background-color: #4a2222;
+}
+
+/* === Modal Overlay === */
+
+.modal-overlay {
+    -fx-background-color: rgba(15, 15, 20, 0.85);
+    -fx-max-width: infinity;
+    -fx-max-height: infinity;
+}
+
+/* === Analytics Toggle === */
+
+.analytics-toggle {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #b0b0c8;
+    -fx-cursor: hand;
+    -fx-padding: 8 0;
+}
+
+.analytics-toggle:hover {
+    -fx-text-fill: #c9a84c;
+}
+
+/* === Tooltips === */
+
+.game-tooltip {
+    -fx-font-size: 12px;
+    -fx-background-color: #1a1a24;
+    -fx-border-color: #2a2a38;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-padding: 6 10;
     -fx-text-fill: #d4d4dc;
 }
 

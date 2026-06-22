@@ -35,8 +35,10 @@ public class PlayViewModel {
     public final SimpleListProperty<RoundDTO> roundHistory = new SimpleListProperty<>(FXCollections.observableArrayList());
     public final SimpleBooleanProperty runEnded = new SimpleBooleanProperty(false);
     public final SimpleObjectProperty<RunDTO> finalRun = new SimpleObjectProperty<>();
+    public final SimpleObjectProperty<RunDTO> resumedRun = new SimpleObjectProperty<>();
     public final SimpleListProperty<BuffDTO> activeBuffs = new SimpleListProperty<>(FXCollections.observableArrayList());
     public final SimpleBooleanProperty error = new SimpleBooleanProperty(false);
+    public final SimpleStringProperty errorMessage = new SimpleStringProperty();
     public final SimpleBooleanProperty loading = new SimpleBooleanProperty(false);
 
     public PlayViewModel(BackendClient client) {
@@ -51,9 +53,13 @@ public class PlayViewModel {
             try {
                 RunDTO run = client.getRunById(runId);
                 Platform.runLater(() -> applyRunState(run));
+                Platform.runLater(() -> resumedRun.set(run));
             } catch (Exception e) {
                 e.printStackTrace();
-                Platform.runLater(() -> error.set(true));
+                Platform.runLater(() -> {
+                    error.set(true);
+                    errorMessage.set("Failed to load your run. Please try again.");
+                });
             }
         });
     }
@@ -78,7 +84,13 @@ public class PlayViewModel {
                 });
             } catch (Exception e) {
                 e.printStackTrace();
-                Platform.runLater(() -> error.set(true));
+                Platform.runLater(() -> {
+                    error.set(true);
+                    String msg = e.getMessage();
+                    if (msg != null && msg.contains("409")) {
+                        errorMessage.set("You already have a run in progress. Please finish or abandon it first.");
+                    }
+                });
             } finally {
                 Platform.runLater(() -> loading.set(false));
             }
@@ -88,6 +100,7 @@ public class PlayViewModel {
     public void submitMove(Move move) {
         loading.set(true);
         error.set(false);
+        errorMessage.set(null);
         executor.execute(() -> {
             try {
                 MoveResponse response = client.submitMove(runId.get(), move);
@@ -103,6 +116,7 @@ public class PlayViewModel {
     public void selectBuff(Long buffId) {
         loading.set(true);
         error.set(false);
+        errorMessage.set(null);
         executor.execute(() -> {
             try {
                 MoveResponse response = client.selectBuff(runId.get(), buffId);
@@ -163,5 +177,29 @@ public class PlayViewModel {
 
     public void shutdown() {
         executor.shutdown();
+    }
+
+    public void abandonRun(Runnable onSuccess) {
+        loading.set(true);
+        error.set(false);
+        errorMessage.set(null);
+        executor.execute(() -> {
+            try {
+                client.discardRun(runId.get());
+                Platform.runLater(() -> {
+                    loading.set(false);
+                    if (onSuccess != null) onSuccess.run();
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> {
+                    loading.set(false);
+                    error.set(true);
+                    errorMessage.set("Failed to abandon run, but you can still leave.");
+                    // Don't trap the user — still navigate away
+                    if (onSuccess != null) onSuccess.run();
+                });
+            }
+        });
     }
 }
