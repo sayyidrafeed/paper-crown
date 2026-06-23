@@ -173,6 +173,19 @@ public class RunService {
         return response;
     }
 
+    public void abandonRun(Long runId) {
+        RunEntity run = runRepository.findById(runId)
+                .orElseThrow(() -> new NoSuchElementException("Run not found: " + runId));
+        if (run.getStatus() == RunStatus.IN_PROGRESS) {
+            run.setStatus(RunStatus.COMPLETED);
+            run.setCurrentHp(0);
+            run.setEndedAt(LocalDateTime.now());
+            runRepository.save(run);
+            statsService.updateStats(run);
+            achievementService.checkAchievements();
+        }
+    }
+
     private boolean hasDrawAsWin(RunEntity run) {
         return run.getRunBuffs().stream()
                 .anyMatch(rb -> !rb.isConsumed() && "DRAW_AS_WIN".equals(rb.getBuff().getEffectKey()));

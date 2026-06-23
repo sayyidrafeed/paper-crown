@@ -537,3 +537,55 @@
 .result-draw {
     -fx-text-fill: -fx-accent-color;
 }
+
+/* === Custom Dialogs === */
+
+.custom-dialog {
+    -fx-background-color: #1a1a24;
+    -fx-font-family: "Inter", "Segoe UI", "SansSerif";
+}
+
+.custom-dialog > *.button-bar > *.container {
+    -fx-background-color: #1a1a24;
+}
+
+.custom-dialog > *.label.content {
+    -fx-font-size: 14px;
+    -fx-text-fill: #d4d4dc;
+    -fx-padding: 16;
+}
+
+.custom-dialog:header *.header-panel {
+    -fx-background-color: #14141c;
+}
+
+.custom-dialog:header *.header-panel *.label {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #e8e8f0;
+}
+
+.custom-dialog .button {
+    -fx-background-color: #2a2a38;
+    -fx-text-fill: #d4d4dc;
+    -fx-border-color: #3a3a4a;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 8 16;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.custom-dialog .button:hover {
+    -fx-background-color: #3a3a4a;
+}
+
+.custom-dialog .button:default {
+    -fx-background-color: #c9a84c;
+    -fx-text-fill: #0f0f14;
+    -fx-border-color: transparent;
+}
+
+.custom-dialog .button:default:hover {
+    -fx-background-color: #dbb85e;
+}

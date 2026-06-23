@@ -119,6 +119,22 @@ public class PlayViewModel {
         });
     }
 
+    public void abandonRun(Runnable onSuccess) {
+        loading.set(true);
+        error.set(false);
+        executor.execute(() -> {
+            try {
+                client.abandonRun(runId.get());
+                Platform.runLater(onSuccess);
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> error.set(true));
+            } finally {
+                Platform.runLater(() -> loading.set(false));
+            }
+        });
+    }
+
     private void applyRunState(RunDTO run) {
         runId.set(run.getId());
         currentHp.set(run.getCurrentHp());

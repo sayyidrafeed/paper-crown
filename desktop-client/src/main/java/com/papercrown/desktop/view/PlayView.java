@@ -71,7 +71,17 @@ public class PlayView extends VBox {
         leaveBtn.setStyle("-fx-padding: 8 16; -fx-font-size: 13px;");
         leaveBtn.setOnMouseClicked(e -> {
             audioManager.play("click");
-            navigateAway();
+            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
+            alert.getDialogPane().getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
+            alert.getDialogPane().getStyleClass().add("custom-dialog");
+            alert.setTitle("Abandon Run");
+            alert.setHeaderText("Are you sure you want to abandon this run?");
+            alert.setContentText("Abandoning will end the current run immediately and record it as a loss. This action cannot be undone.");
+            alert.showAndWait().ifPresent(response -> {
+                if (response == javafx.scene.control.ButtonType.OK) {
+                    vm.abandonRun(() -> navigateAway());
+                }
+            });
         });
 
         header.getChildren().addAll(title, spacer, leaveBtn);

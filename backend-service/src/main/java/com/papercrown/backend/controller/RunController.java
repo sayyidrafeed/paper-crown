@@ -59,4 +59,10 @@ public class RunController {
         MoveResponse response = runService.selectBuff(id, buffId);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/{id}/abandon")
+    public ResponseEntity<Void> abandonRun(@PathVariable Long id) {
+        runService.abandonRun(id);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -116,6 +116,18 @@ public class DashboardView extends VBox {
                 createStatCard("Best Streak", String.valueOf(stats.getBestStreak()), "blue")
         );
 
+        updateCharts();
+
+        // Update New Run button
+        actions.getChildren().clear();
+        createActionButtons();
+        animateCardEntrance();
+    }
+
+    private void updateCharts() {
+        StatsDTO stats = vm.stats.get();
+        if (stats == null) return;
+
         chartsArea.getChildren().clear();
         FlowPane chartRow = new FlowPane(16, 16);
         chartRow.getChildren().addAll(
@@ -124,11 +136,6 @@ public class DashboardView extends VBox {
                 createRunLengthChart()
         );
         chartsArea.getChildren().add(chartRow);
-
-        // Update New Run button
-        actions.getChildren().clear();
-        createActionButtons();
-        animateCardEntrance();
     }
 
     private VBox createStatCard(String label, String value, String accent) {
@@ -153,6 +160,8 @@ public class DashboardView extends VBox {
                 onNavigateToPlay.accept(runId);
             } else {
                 javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+                alert.getDialogPane().getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
+                alert.getDialogPane().getStyleClass().add("custom-dialog");
                 alert.setTitle("Cannot Start Run");
                 alert.setHeaderText(null);
                 alert.setContentText("You cannot start a new run while another run is in progress. Please resume or finish your current run.");
@@ -186,6 +195,7 @@ public class DashboardView extends VBox {
                 recentRunsArea.getChildren().add(new RunCard(run));
             }
         }
+        updateCharts();
     }
 
     private void updateAchievements(List<com.papercrown.shared.dto.AchievementDTO> achievements) {

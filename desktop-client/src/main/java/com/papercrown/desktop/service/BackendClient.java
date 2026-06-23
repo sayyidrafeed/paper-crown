@@ -79,6 +79,10 @@ public class BackendClient {
         return post("/runs/" + runId + "/buff?buffId=" + buffId, null, MoveResponse.class);
     }
 
+    public void abandonRun(Long runId) {
+        post("/runs/" + runId + "/abandon", null, Void.class);
+    }
+
     public StatsDTO getStats() {
         return get("/stats", StatsDTO.class);
     }
