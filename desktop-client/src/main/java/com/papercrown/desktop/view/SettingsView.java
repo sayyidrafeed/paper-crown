@@ -104,7 +104,10 @@ public class SettingsView extends VBox {
         Label exitBtn = new Label("Exit Game");
         exitBtn.getStyleClass().addAll("action-button", "button-primary");
         exitBtn.setStyle("-fx-background-color: #e65c6c; -fx-text-fill: #ffffff; -fx-pref-width: 1000; -fx-alignment: center;");
-        exitBtn.setOnMouseClicked(e -> javafx.application.Platform.exit());
+        exitBtn.setOnMouseClicked(e -> {
+            javafx.application.Platform.exit();
+            System.exit(0);
+        });
 
         HBox row = new HBox(exitBtn);
         row.setAlignment(Pos.CENTER);

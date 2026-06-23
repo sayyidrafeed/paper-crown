@@ -140,6 +140,11 @@ public class RunService {
         MoveResponse response = new MoveResponse(
                 mapper.toRoundDTO(round), effectiveOutcome, run.getCurrentHp()
         );
+        response.setMaxHp(run.getMaxHp());
+        response.setActiveBuffs(run.getRunBuffs().stream()
+                .filter(rb -> !rb.isConsumed())
+                .map(rb -> mapper.toBuffDTO(rb.getBuff()))
+                .collect(java.util.stream.Collectors.toList()));
 
         if (run.getCurrentHp() <= 0) {
             return endRun(run, response);
@@ -167,6 +172,11 @@ public class RunService {
         runRepository.save(run);
 
         MoveResponse response = new MoveResponse(null, null, run.getCurrentHp());
+        response.setMaxHp(run.getMaxHp());
+        response.setActiveBuffs(run.getRunBuffs().stream()
+                .filter(rb -> !rb.isConsumed())
+                .map(rb -> mapper.toBuffDTO(rb.getBuff()))
+                .collect(java.util.stream.Collectors.toList()));
         return response;
     }
 

@@ -43,6 +43,7 @@ public class PlayView extends VBox {
     private VBox runSummary;
     private VBox mainContent;
     private VBox startRunOverlay;
+    private VBox resumeOrAbandonOverlay;
 
     public PlayView(BackendClient client, AudioManager audioManager, Long runId, Runnable onNavigateToDashboard, ObservableBooleanValue animationEnabled) {
         this.vm = new PlayViewModel(client);
@@ -210,28 +211,32 @@ public class PlayView extends VBox {
         runSummary.setManaged(false);
 
         startRunOverlay = createStartRunOverlay();
+        resumeOrAbandonOverlay = createResumeOrAbandonOverlay();
         if (runId == null) {
             mainContent.setVisible(false);
             mainContent.setManaged(false);
             startRunOverlay.setVisible(true);
             startRunOverlay.setManaged(true);
+            resumeOrAbandonOverlay.setVisible(false);
+            resumeOrAbandonOverlay.setManaged(false);
         } else {
+            // Navigated from Dashboard with explicit runId — straight to game
             mainContent.setVisible(true);
             mainContent.setManaged(true);
             startRunOverlay.setVisible(false);
             startRunOverlay.setManaged(false);
+            resumeOrAbandonOverlay.setVisible(false);
+            resumeOrAbandonOverlay.setManaged(false);
         }
 
-        rootStack.getChildren().addAll(mainContent, startRunOverlay, buffModal, runSummary);
+        rootStack.getChildren().addAll(mainContent, startRunOverlay, resumeOrAbandonOverlay, buffModal, runSummary);
         VBox.setVgrow(rootStack, Priority.ALWAYS);
 
         getChildren().add(rootStack);
 
         bindViewModel();
 
-        if (runId != null) {
-            vm.initialize(runId);
-        }
+        vm.initialize(runId);
     }
 
     private void bindViewModel() {
@@ -256,7 +261,8 @@ public class PlayView extends VBox {
             moveButtons.setDisable(val);
         });
         vm.runId.addListener((obs, old, val) -> {
-            if (val != null && val.longValue() > 0 && startRunOverlay.isVisible()) {
+            if (val == null || val.longValue() <= 0) return;
+            if (startRunOverlay.isVisible()) {
                 mainContent.setVisible(true);
                 mainContent.setManaged(true);
                 if (animationEnabled.get()) {
@@ -273,7 +279,40 @@ public class PlayView extends VBox {
                     startRunOverlay.setManaged(false);
                 }
             }
+            if (resumeOrAbandonOverlay.isVisible() && old != null && old.longValue() > 0) {
+                mainContent.setVisible(true);
+                mainContent.setManaged(true);
+                if (animationEnabled.get()) {
+                    FadeTransition ft = new FadeTransition(Duration.millis(300), resumeOrAbandonOverlay);
+                    ft.setFromValue(1);
+                    ft.setToValue(0);
+                    ft.setOnFinished(ev -> {
+                        resumeOrAbandonOverlay.setVisible(false);
+                        resumeOrAbandonOverlay.setManaged(false);
+                    });
+                    ft.play();
+                } else {
+                    resumeOrAbandonOverlay.setVisible(false);
+                    resumeOrAbandonOverlay.setManaged(false);
+                }
+            }
         });
+
+        vm.pendingRun.addListener((obs, old, run) -> {
+            if (run == null) return;
+            // Entered via sidebar with an existing run — switch to resume/abandon overlay
+            startRunOverlay.setVisible(false);
+            startRunOverlay.setManaged(false);
+            resumeOrAbandonOverlay.setVisible(true);
+            resumeOrAbandonOverlay.setManaged(true);
+            vm.initialize(run.getId());
+        });
+
+        // Initial renders to sync UI with initial VM state
+        renderHp(vm.currentHp.get(), vm.maxHp.get());
+        roundInfo.setText("Round " + vm.roundNumber.get());
+        updateActiveBuffs(vm.activeBuffs.get());
+        updateHistory(vm.roundHistory.get());
     }
 
     private void renderHp(int current, int max) {
@@ -502,6 +541,74 @@ public class PlayView extends VBox {
         });
 
         card.getChildren().addAll(crownIcon, title, desc, startBtn);
+        overlay.getChildren().add(card);
+        return overlay;
+    }
+
+    private VBox createResumeOrAbandonOverlay() {
+        VBox overlay = new VBox();
+        overlay.setAlignment(Pos.CENTER);
+        overlay.setStyle("-fx-background-color: rgba(15,15,20,0.95);");
+        overlay.setMaxWidth(Double.MAX_VALUE);
+        overlay.setMaxHeight(Double.MAX_VALUE);
+
+        VBox card = new VBox(24);
+        card.getStyleClass().add("stat-card");
+        card.setPadding(new Insets(40));
+        card.setAlignment(Pos.CENTER);
+        card.setMaxWidth(400);
+
+        FontIcon flagIcon = new FontIcon(org.kordamp.ikonli.fontawesome5.FontAwesomeSolid.FLAG);
+        flagIcon.setIconSize(64);
+        flagIcon.setIconColor(javafx.scene.paint.Color.web("#c9a84c"));
+
+        Label title = new Label("You have an active run");
+        title.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #e8e8f0;");
+
+        Label desc = new Label("Continue your current journey or start fresh?");
+        desc.setStyle("-fx-font-size: 14px; -fx-text-fill: #8888a0; -fx-alignment: center;");
+        desc.setWrapText(true);
+        desc.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+
+        javafx.scene.control.Button resumeBtn = new javafx.scene.control.Button("Resume Run");
+        resumeBtn.getStyleClass().addAll("action-button", "button-primary");
+        resumeBtn.setOnAction(e -> {
+            audioManager.play("click");
+            mainContent.setVisible(true);
+            mainContent.setManaged(true);
+            if (animationEnabled.get()) {
+                FadeTransition ft = new FadeTransition(Duration.millis(300), overlay);
+                ft.setFromValue(1);
+                ft.setToValue(0);
+                ft.setOnFinished(ev -> {
+                    overlay.setVisible(false);
+                    overlay.setManaged(false);
+                });
+                ft.play();
+            } else {
+                overlay.setVisible(false);
+                overlay.setManaged(false);
+            }
+        });
+
+        javafx.scene.control.Button abandonBtn = new javafx.scene.control.Button("Abandon & New Run");
+        abandonBtn.getStyleClass().addAll("action-button", "button-secondary");
+        abandonBtn.setOnAction(e -> {
+            audioManager.play("click");
+            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
+            alert.getDialogPane().getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
+            alert.getDialogPane().getStyleClass().add("custom-dialog");
+            alert.setTitle("Abandon Run");
+            alert.setHeaderText("Are you sure you want to abandon this run?");
+            alert.setContentText("Abandoning will end the current run immediately and record it as a loss. This action cannot be undone.");
+            alert.showAndWait().ifPresent(response -> {
+                if (response == javafx.scene.control.ButtonType.OK) {
+                    vm.abandonRun(() -> vm.startNewRun());
+                }
+            });
+        });
+
+        card.getChildren().addAll(flagIcon, title, desc, resumeBtn, abandonBtn);
         overlay.getChildren().add(card);
         return overlay;
     }

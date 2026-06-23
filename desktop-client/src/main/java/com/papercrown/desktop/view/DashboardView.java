@@ -161,26 +161,28 @@ public class DashboardView extends VBox {
     private void createActionButtons() {
         RunDTO unfinished = vm.unfinishedRun.get();
 
-        var playBtn = new Label(unfinished != null ? "Abandon & New Run" : "New Run");
-        playBtn.getStyleClass().addAll("action-button", unfinished != null ? "button-secondary" : "button-primary");
-        playBtn.setOnMouseClicked(e -> { audioManager.play("click"); vm.startNewRun(runId -> {
-            if (runId != null) {
-                onNavigateToPlay.accept(runId);
+        boolean hasUnfinished = unfinished != null;
+        var playBtn = new Label(hasUnfinished ? "Abandon & New Run" : "New Run");
+        playBtn.getStyleClass().addAll("action-button", hasUnfinished ? "button-secondary" : "button-primary");
+        playBtn.setOnMouseClicked(e -> {
+            audioManager.play("click");
+            if (hasUnfinished) {
+                javafx.scene.control.Alert confirm = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
+                confirm.getDialogPane().getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
+                confirm.getDialogPane().getStyleClass().add("custom-dialog");
+                confirm.setTitle("Abandon & New Run");
+                confirm.setHeaderText("Abandon your current run and start a new one?");
+                confirm.setContentText("Your current run will be ended and recorded as a loss. A new run will begin immediately.");
+                confirm.showAndWait().ifPresent(response -> {
+                    if (response != javafx.scene.control.ButtonType.OK) return;
+                    doStartNewRun();
+                });
             } else {
-                var unfinished = vm.unfinishedRun.get();
-                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-                alert.getDialogPane().getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
-                alert.getDialogPane().getStyleClass().add("custom-dialog");
-                alert.setTitle("Cannot Start Run");
-                alert.setHeaderText(null);
-                alert.setContentText(unfinished != null
-                        ? "You cannot start a new run while another run is in progress. Please resume or finish your current run."
-                        : "Failed to start a new run. Please check that the backend is running and try again.");
-                alert.showAndWait();
+                doStartNewRun();
             }
-        }); });
+        });
 
-        if (unfinished != null) {
+        if (hasUnfinished) {
             resumeBtn = new Label("Resume Run");
             resumeBtn.getStyleClass().addAll("action-button", "button-primary");
             resumeBtn.setOnMouseClicked(e -> { audioManager.play("click"); onNavigateToPlay.accept(unfinished.getId()); });
@@ -188,6 +190,25 @@ public class DashboardView extends VBox {
         } else {
             actions.getChildren().add(playBtn);
         }
+    }
+
+    private void doStartNewRun() {
+        vm.startNewRun(runId -> {
+            if (runId != null) {
+                onNavigateToPlay.accept(runId);
+            } else {
+                var latestUnfinished = vm.unfinishedRun.get();
+                javafx.scene.control.Alert errorAlert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+                errorAlert.getDialogPane().getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
+                errorAlert.getDialogPane().getStyleClass().add("custom-dialog");
+                errorAlert.setTitle("Cannot Start Run");
+                errorAlert.setHeaderText(null);
+                errorAlert.setContentText(latestUnfinished != null
+                        ? "You cannot start a new run while another run is in progress. Please resume or finish your current run."
+                        : "Failed to start a new run. Please check that the backend is running and try again.");
+                errorAlert.showAndWait();
+            }
+        });
     }
 
     private void updateUnfinishedRun(RunDTO run) {

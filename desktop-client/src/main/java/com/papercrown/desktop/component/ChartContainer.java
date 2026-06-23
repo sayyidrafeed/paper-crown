@@ -31,6 +31,9 @@ public class ChartContainer extends StackPane {
         chartPanel.setBackground(BG_COLOR);
         chartPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         chartPanel.setMouseWheelEnabled(false);
+        chartPanel.setMinimumDrawWidth(10);
+        chartPanel.setMinimumDrawHeight(10);
+        chartPanel.setPreferredSize(new java.awt.Dimension(400, 250));
 
         swingNode = new SwingNode();
         swingNode.setContent(chartPanel);

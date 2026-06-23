@@ -7,6 +7,8 @@ public class MoveResponse {
     private RoundDTO round;
     private RoundOutcome outcome;
     private int currentHp;
+    private int maxHp;
+    private List<BuffDTO> activeBuffs;
     private List<BuffDTO> buffChoice;
     private boolean runEnded;
     private RunDTO finalRun;
@@ -25,6 +27,10 @@ public class MoveResponse {
     public void setOutcome(RoundOutcome outcome) { this.outcome = outcome; }
     public int getCurrentHp() { return currentHp; }
     public void setCurrentHp(int currentHp) { this.currentHp = currentHp; }
+    public int getMaxHp() { return maxHp; }
+    public void setMaxHp(int maxHp) { this.maxHp = maxHp; }
+    public List<BuffDTO> getActiveBuffs() { return activeBuffs; }
+    public void setActiveBuffs(List<BuffDTO> activeBuffs) { this.activeBuffs = activeBuffs; }
     public List<BuffDTO> getBuffChoice() { return buffChoice; }
     public void setBuffChoice(List<BuffDTO> buffChoice) { this.buffChoice = buffChoice; }
     public boolean isRunEnded() { return runEnded; }

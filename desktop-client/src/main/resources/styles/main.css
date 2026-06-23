@@ -60,11 +60,12 @@
 
 .sidebar-label {
     -fx-font-size: 14px;
+    -fx-text-fill: #d4d4dc;
 }
 
 .sidebar-icon {
     -fx-font-size: 18px;
-    -fx-icon-color: #8888a0;
+    -fx-icon-color: #a0a0b8;
 }
 
 /* === Content Area === */

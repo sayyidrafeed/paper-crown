@@ -62,6 +62,13 @@ public class StatsService {
         moveUsage.put("PAPER", 0);
         moveUsage.put("SCISSORS", 0);
 
+        for (RoundEntity round : allRounds) {
+            if (round.getPlayerMove() != null) {
+                String m = round.getPlayerMove().name();
+                moveUsage.put(m, moveUsage.getOrDefault(m, 0) + 1);
+            }
+        }
+
         return new StatsDTO(totalRuns, totalWins, totalLosses, totalDraws, totalRounds,
                 winRate, currentStreak, bestStreak, moveUsage);
     }

@@ -43,8 +43,23 @@ public class PlayViewModel {
         this.client = client;
     }
 
+    public final SimpleObjectProperty<RunDTO> pendingRun = new SimpleObjectProperty<>();
+
     public void initialize(Long runId) {
-        if (runId == null) return;
+        if (runId == null) {
+            // Entered from sidebar — check for an existing unfinished run first
+            executor.execute(() -> {
+                try {
+                    RunDTO run = client.getUnfinishedRun();
+                    Platform.runLater(() -> {
+                        if (run != null) pendingRun.set(run);
+                    });
+                } catch (Exception e) {
+                    // no unfinished run or network issue — stay on startRunOverlay
+                }
+            });
+            return;
+        }
         this.runId.set(runId);
         error.set(false);
         executor.execute(() -> {
@@ -150,6 +165,7 @@ public class PlayViewModel {
 
     private void applyResponse(MoveResponse response) {
         currentHp.set(response.getCurrentHp());
+        maxHp.set(response.getMaxHp());
         runEnded.set(response.isRunEnded());
         finalRun.set(response.getFinalRun());
 
@@ -167,9 +183,15 @@ public class PlayViewModel {
         }
 
         // Set outcome LAST so the UI listener sees up-to-date move values
-        lastOutcome.set(response.getOutcome());
+        if (response.getOutcome() != null) {
+            lastOutcome.set(response.getOutcome());
+        }
 
         buffChoice.set(response.getBuffChoice());
+        if (response.getActiveBuffs() != null) {
+            activeBuffs.set(FXCollections.observableArrayList(response.getActiveBuffs()));
+        }
+        
         if (response.getFinalRun() != null) {
             activeBuffs.set(response.getFinalRun().getActiveBuffs() != null
                     ? FXCollections.observableArrayList(response.getFinalRun().getActiveBuffs())
