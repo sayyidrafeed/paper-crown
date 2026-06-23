@@ -214,6 +214,9 @@ public class DashboardView extends VBox {
 
         // ─── keyboard shortcuts ───────────────────────────────────
         sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (oldScene != null) {
+                oldScene.removeEventFilter(KeyEvent.KEY_PRESSED, this::handleKeyPress);
+            }
             if (newScene != null) {
                 newScene.addEventFilter(KeyEvent.KEY_PRESSED, this::handleKeyPress);
             }
