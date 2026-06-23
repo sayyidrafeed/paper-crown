@@ -37,7 +37,8 @@ public class SettingsView extends VBox {
                 createFullscreenSetting(),
                 createVolumeSetting(),
                 createSoundSetting(),
-                createAnimationSetting()
+                createAnimationSetting(),
+                createExitButton()
         );
 
         getChildren().addAll(title, settingsList);
@@ -97,6 +98,20 @@ public class SettingsView extends VBox {
 
         VBox wrapper = new VBox(row);
         return wrapper;
+    }
+
+    private VBox createExitButton() {
+        Label exitBtn = new Label("Exit Game");
+        exitBtn.getStyleClass().addAll("action-button", "button-primary");
+        exitBtn.setStyle("-fx-background-color: #e65c6c; -fx-text-fill: #ffffff; -fx-pref-width: 1000; -fx-alignment: center;");
+        exitBtn.setOnMouseClicked(e -> javafx.application.Platform.exit());
+
+        HBox row = new HBox(exitBtn);
+        row.setAlignment(Pos.CENTER);
+        row.setPadding(new Insets(32, 0, 0, 0));
+        HBox.setHgrow(exitBtn, Priority.ALWAYS);
+        
+        return new VBox(row);
     }
 
     private HBox createSettingRow(String label, String iconStr) {
