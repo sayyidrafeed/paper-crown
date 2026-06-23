@@ -169,7 +169,7 @@ public class RunService {
                 // Already completed or abandoned — no-op
                 return;
             }
-            throw new NoSuchElementException("Run not found: " + runId);
+            throw new IllegalStateException("Failed to update run status even though it is in progress");
         }
     }
 
