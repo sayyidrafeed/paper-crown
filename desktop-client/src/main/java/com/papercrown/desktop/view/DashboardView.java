@@ -167,13 +167,13 @@ public class DashboardView extends VBox {
             if (runId != null) {
                 onNavigateToPlay.accept(runId);
             } else {
-                var unfinished = vm.unfinishedRun.get();
+                var latestUnfinished = vm.unfinishedRun.get();
                 javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
                 alert.getDialogPane().getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
                 alert.getDialogPane().getStyleClass().add("custom-dialog");
                 alert.setTitle("Cannot Start Run");
                 alert.setHeaderText(null);
-                alert.setContentText(unfinished != null
+                alert.setContentText(latestUnfinished != null
                         ? "You cannot start a new run while another run is in progress. Please resume or finish your current run."
                         : "Failed to start a new run. Please check that the backend is running and try again.");
                 alert.showAndWait();

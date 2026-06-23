@@ -5,7 +5,7 @@ spring:
   application:
     name: paper-crown-backend
   datasource:
-    url: jdbc:postgresql://localhost:5433/papercrown
+    url: jdbc:postgresql://localhost:5432/papercrown
     username: papercrown
     password: papercrown
     driver-class-name: org.postgresql.Driver

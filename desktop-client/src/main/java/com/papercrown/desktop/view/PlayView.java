@@ -274,6 +274,12 @@ public class PlayView extends VBox {
                 }
             }
         });
+
+        // Initial renders to sync UI with initial VM state
+        renderHp(vm.currentHp.get(), vm.maxHp.get());
+        roundInfo.setText("Round " + vm.roundNumber.get());
+        updateActiveBuffs(vm.activeBuffs.get());
+        updateHistory(vm.roundHistory.get());
     }
 
     private void renderHp(int current, int max) {

@@ -51,6 +51,11 @@ public class SettingsViewModel {
                     masterVolume.set(Double.parseDouble(settings.getOrDefault(KEY_VOLUME, "0.5")));
                     soundEnabled.set("true".equals(settings.getOrDefault(KEY_SOUND, "true")));
                     animationEnabled.set("true".equals(settings.getOrDefault(KEY_ANIMATION, "true")));
+                    
+                    // Apply loaded settings immediately without triggering save
+                    audioManager.setSoundEnabled(soundEnabled.get());
+                    audioManager.setMasterVolume(masterVolume.get());
+                    
                     loaded = true;
                 });
             } catch (Exception ignored) {}

@@ -40,6 +40,23 @@ public class MainView extends BorderPane {
         this.primaryStage = primaryStage;
         rootStack = new StackPane();
 
+        // Load global settings on startup
+        Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "settings-loader");
+            t.setDaemon(true);
+            return t;
+        }).execute(() -> {
+            try {
+                var settings = backendClient.getSettings();
+                Platform.runLater(() -> {
+                    audioManager.setSoundEnabled("true".equals(settings.getOrDefault("sound_enabled", "true")));
+                    audioManager.setMasterVolume(Double.parseDouble(settings.getOrDefault("master_volume", "0.5")));
+                    animationEnabled.set("true".equals(settings.getOrDefault("animation_enabled", "true")));
+                    primaryStage.setFullScreen("true".equals(settings.getOrDefault("fullscreen", "false")));
+                });
+            } catch (Exception ignored) {}
+        });
+
         BorderPane mainLayout = new BorderPane();
 
         VBox sidebar = createSidebar();
