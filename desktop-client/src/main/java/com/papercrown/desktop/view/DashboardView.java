@@ -149,7 +149,15 @@ public class DashboardView extends VBox {
         var playBtn = new Label("New Run");
         playBtn.getStyleClass().addAll("action-button", "button-primary");
         playBtn.setOnMouseClicked(e -> { audioManager.play("click"); vm.startNewRun(runId -> {
-            if (runId != null) onNavigateToPlay.accept(runId);
+            if (runId != null) {
+                onNavigateToPlay.accept(runId);
+            } else {
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+                alert.setTitle("Cannot Start Run");
+                alert.setHeaderText(null);
+                alert.setContentText("You cannot start a new run while another run is in progress. Please resume or finish your current run.");
+                alert.showAndWait();
+            }
         }); });
 
         resumeBtn = new Label("Resume");
@@ -165,6 +173,7 @@ public class DashboardView extends VBox {
     }
 
     private void updateUnfinishedRun(RunDTO run) {
+        actions.getChildren().clear();
         createActionButtons();
     }
 
