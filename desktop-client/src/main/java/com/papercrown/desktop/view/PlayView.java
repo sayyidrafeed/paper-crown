@@ -390,6 +390,13 @@ public class PlayView extends VBox {
             updateHistory(vm.roundHistory.get());
         };
 
+        // Automatically shut down the executor when this view is removed from the scene to prevent thread leaks
+        sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene == null) {
+                vm.shutdown();
+            }
+        });
+
         // Execute immediately for initial render to sync UI with initial VM state
         vm.onRunStateApplied.run();
 
