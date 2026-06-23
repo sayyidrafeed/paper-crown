@@ -138,9 +138,9 @@ public class PlayView extends VBox {
         scissorsBtn.setGraphicTextGap(10);
         scissorsBtn.getStyleClass().addAll("move-button", "move-scissors");
 
-        rockBtn.setOnMouseClicked(e -> { audioManager.play("click"); vm.submitMove(Move.ROCK); });
-        paperBtn.setOnMouseClicked(e -> { audioManager.play("click"); vm.submitMove(Move.PAPER); });
-        scissorsBtn.setOnMouseClicked(e -> { audioManager.play("click"); vm.submitMove(Move.SCISSORS); });
+        addTactileFeedback(rockBtn, Move.ROCK);
+        addTactileFeedback(paperBtn, Move.PAPER);
+        addTactileFeedback(scissorsBtn, Move.SCISSORS);
 
         moveButtons.getChildren().addAll(rockBtn, paperBtn, scissorsBtn);
         moveCard.getChildren().addAll(movePrompt, moveButtons);
@@ -354,17 +354,45 @@ public class PlayView extends VBox {
             return;
         }
 
-        TranslateTransition tt = new TranslateTransition(Duration.millis(50), hpRow);
+        TranslateTransition tt = new TranslateTransition(Duration.millis(50), mainContent);
         tt.setFromX(0);
-        tt.setToX(10);
+        tt.setToX(15);
         tt.setAutoReverse(true);
         tt.setCycleCount(6);
         tt.play();
+
+        Region flash = new Region();
+        flash.setStyle("-fx-background-color: rgba(230, 92, 108, 0.4);");
+        flash.setMouseTransparent(true);
+        rootStack.getChildren().add(flash);
+
+        FadeTransition ft = new FadeTransition(Duration.millis(400), flash);
+        ft.setFromValue(1);
+        ft.setToValue(0);
+        ft.setOnFinished(e -> rootStack.getChildren().remove(flash));
+        ft.play();
 
         resultSection.setStyle("-fx-background-color: rgba(139,47,58,0.3); -fx-background-radius: 12;");
         PauseTransition reset = new PauseTransition(Duration.millis(300));
         reset.setOnFinished(e -> resultSection.setStyle(""));
         reset.play();
+    }
+
+    private void addTactileFeedback(Label btn, Move move) {
+        btn.setOnMouseClicked(e -> {
+            audioManager.play("click");
+            if (animationEnabled.get()) {
+                ScaleTransition st = new ScaleTransition(Duration.millis(100), btn);
+                st.setToX(0.9);
+                st.setToY(0.9);
+                st.setAutoReverse(true);
+                st.setCycleCount(2);
+                st.setOnFinished(ev -> vm.submitMove(move));
+                st.play();
+            } else {
+                vm.submitMove(move);
+            }
+        });
     }
 
     private void animateDraw() {

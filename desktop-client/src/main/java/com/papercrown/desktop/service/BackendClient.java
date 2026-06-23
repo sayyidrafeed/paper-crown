@@ -53,6 +53,10 @@ public class BackendClient {
         }
     }
 
+    public void abandonUnfinishedRun() {
+        post("/runs/abandon", null, Void.class);
+    }
+
     public List<RunDTO> getAllRuns() {
         return getList("/runs", new TypeReference<List<RunDTO>>() {});
     }

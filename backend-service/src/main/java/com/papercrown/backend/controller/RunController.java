@@ -36,6 +36,12 @@ public class RunController {
         return ResponseEntity.ok(run);
     }
 
+    @PostMapping("/abandon")
+    public ResponseEntity<Void> abandonUnfinishedRun() {
+        runService.abandonUnfinishedRun();
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping
     public ResponseEntity<List<RunDTO>> getAllRuns() {
         return ResponseEntity.ok(runService.getAllRuns());

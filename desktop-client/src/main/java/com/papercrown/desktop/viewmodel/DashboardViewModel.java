@@ -77,6 +77,9 @@ public class DashboardViewModel {
     public void startNewRun(java.util.function.Consumer<Long> onRunCreated) {
         executor.execute(() -> {
             try {
+                if (unfinishedRun.get() != null) {
+                    client.abandonUnfinishedRun();
+                }
                 RunDTO run = client.startRun();
                 Platform.runLater(() -> onRunCreated.accept(run.getId()));
             } catch (Exception e) {

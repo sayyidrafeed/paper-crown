@@ -25,8 +25,14 @@ import java.util.function.Consumer;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PiePlot;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.BasicStroke;
 
 public class DashboardView extends VBox {
 
@@ -153,8 +159,10 @@ public class DashboardView extends VBox {
     }
 
     private void createActionButtons() {
-        var playBtn = new Label("New Run");
-        playBtn.getStyleClass().addAll("action-button", "button-primary");
+        RunDTO unfinished = vm.unfinishedRun.get();
+
+        var playBtn = new Label(unfinished != null ? "Abandon & New Run" : "New Run");
+        playBtn.getStyleClass().addAll("action-button", unfinished != null ? "button-secondary" : "button-primary");
         playBtn.setOnMouseClicked(e -> { audioManager.play("click"); vm.startNewRun(runId -> {
             if (runId != null) {
                 onNavigateToPlay.accept(runId);
@@ -172,11 +180,9 @@ public class DashboardView extends VBox {
             }
         }); });
 
-        resumeBtn = new Label("Resume");
-        resumeBtn.getStyleClass().addAll("action-button", "button-secondary");
-
-        RunDTO unfinished = vm.unfinishedRun.get();
         if (unfinished != null) {
+            resumeBtn = new Label("Resume Run");
+            resumeBtn.getStyleClass().addAll("action-button", "button-primary");
             resumeBtn.setOnMouseClicked(e -> { audioManager.play("click"); onNavigateToPlay.accept(unfinished.getId()); });
             actions.getChildren().addAll(resumeBtn, playBtn);
         } else {
@@ -236,10 +242,16 @@ public class DashboardView extends VBox {
             dataset.setValue("No data", 1);
         }
         JFreeChart chart = ChartFactory.createPieChart("Move Usage", dataset, true, true, false);
+        applyDarkTheme(chart);
         PiePlot plot = (PiePlot) chart.getPlot();
-        plot.setSectionPaint("ROCK", new java.awt.Color(212, 160, 106));
-        plot.setSectionPaint("PAPER", new java.awt.Color(106, 154, 212));
-        plot.setSectionPaint("SCISSORS", new java.awt.Color(196, 106, 154));
+        plot.setSectionPaint("ROCK", new Color(212, 160, 106));
+        plot.setSectionPaint("PAPER", new Color(106, 154, 212));
+        plot.setSectionPaint("SCISSORS", new Color(196, 106, 154));
+        plot.setSectionOutlinesVisible(false);
+        plot.setLabelBackgroundPaint(new Color(26, 26, 36, 200));
+        plot.setLabelPaint(new Color(212, 212, 220));
+        plot.setLabelOutlinePaint(null);
+        plot.setLabelShadowPaint(null);
         pieSectionPaintFallback(plot, dataset);
         return new ChartContainer(chart);
     }
@@ -247,7 +259,7 @@ public class DashboardView extends VBox {
     @SuppressWarnings("unchecked")
     private void pieSectionPaintFallback(PiePlot plot, DefaultPieDataset dataset) {
         int i = 0;
-        java.awt.Color[] fallbacks = {new java.awt.Color(201, 168, 76), new java.awt.Color(139, 47, 58), new java.awt.Color(107, 91, 149)};
+        Color[] fallbacks = {new Color(201, 168, 76), new Color(139, 47, 58), new Color(107, 91, 149)};
         for (Object key : dataset.getKeys()) {
             Comparable<Object> cKey = (Comparable<Object>) key;
             if (plot.getSectionPaint(cKey) == null) {
@@ -266,6 +278,13 @@ public class DashboardView extends VBox {
             }
         }
         JFreeChart chart = ChartFactory.createLineChart("Win Trend", "Run", "Wins", dataset);
+        applyDarkTheme(chart);
+        CategoryPlot plot = chart.getCategoryPlot();
+        LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
+        renderer.setSeriesPaint(0, new Color(201, 168, 76)); // Gold
+        renderer.setSeriesStroke(0, new BasicStroke(3.0f));
+        renderer.setDefaultShapesVisible(true);
+        renderer.setDefaultItemLabelsVisible(true);
         return new ChartContainer(chart);
     }
 
@@ -278,6 +297,48 @@ public class DashboardView extends VBox {
             }
         }
         JFreeChart chart = ChartFactory.createBarChart("Run Length History", "Run", "Rounds", dataset);
+        applyDarkTheme(chart);
+        CategoryPlot plot = chart.getCategoryPlot();
+        BarRenderer renderer = (BarRenderer) plot.getRenderer();
+        renderer.setSeriesPaint(0, new Color(97, 165, 194)); // Blue
+        renderer.setDrawBarOutline(false);
         return new ChartContainer(chart);
+    }
+
+    private void applyDarkTheme(JFreeChart chart) {
+        Color bg = new Color(26, 26, 36); // #1a1a24
+        Color text = new Color(212, 212, 220); // #d4d4dc
+        Color grid = new Color(42, 42, 56); // #2a2a38
+
+        chart.setBackgroundPaint(bg);
+        chart.getTitle().setPaint(text);
+        chart.getTitle().setFont(new Font("SansSerif", Font.BOLD, 16));
+        
+        if (chart.getLegend() != null) {
+            chart.getLegend().setBackgroundPaint(bg);
+            chart.getLegend().setItemPaint(text);
+            chart.getLegend().setItemFont(new Font("SansSerif", Font.PLAIN, 12));
+            chart.getLegend().setBorder(0, 0, 0, 0);
+        }
+
+        org.jfree.chart.plot.Plot plot = chart.getPlot();
+        plot.setBackgroundPaint(bg);
+        plot.setOutlinePaint(null);
+
+        if (plot instanceof CategoryPlot) {
+            CategoryPlot cPlot = (CategoryPlot) plot;
+            cPlot.setRangeGridlinePaint(grid);
+            cPlot.setDomainGridlinePaint(grid);
+            
+            cPlot.getDomainAxis().setTickLabelPaint(text);
+            cPlot.getDomainAxis().setLabelPaint(text);
+            cPlot.getDomainAxis().setAxisLinePaint(grid);
+            cPlot.getDomainAxis().setTickMarkPaint(grid);
+
+            cPlot.getRangeAxis().setTickLabelPaint(text);
+            cPlot.getRangeAxis().setLabelPaint(text);
+            cPlot.getRangeAxis().setAxisLinePaint(grid);
+            cPlot.getRangeAxis().setTickMarkPaint(grid);
+        }
     }
 }

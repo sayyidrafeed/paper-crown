@@ -63,6 +63,16 @@ public class RunService {
                 .orElse(null);
     }
 
+    public void abandonUnfinishedRun() {
+        runRepository.findTopByStatusOrderByCreatedAtDesc(RunStatus.IN_PROGRESS)
+                .ifPresent(run -> {
+                    run.setStatus(RunStatus.COMPLETED);
+                    run.setCurrentHp(0);
+                    run.setEndedAt(LocalDateTime.now());
+                    runRepository.save(run);
+                });
+    }
+
     @Transactional(readOnly = true)
     public RunDTO getRunById(Long id) {
         return runRepository.findById(id)
