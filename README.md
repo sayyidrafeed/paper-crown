@@ -103,75 +103,286 @@ Pastikan backend di terminal pertama tetap berjalan saat desktop client dibuka.
 
 ### 1. Inheritance
 
-All JavaFX views extend built-in layout classes, inheriting their rendering and behavior:
+#### 1.1 JavaFX View Hierarchy
+
+All desktop UI classes extend JavaFX layout primitives, inheriting layout management, CSS styling, node traversal, and event dispatch:
 
 | Class | Parent | File |
 |-------|--------|------|
-| `PlayView`, `DashboardView`, `HistoryView`, `AchievementsView`, `SettingsView` | `VBox` | `desktop-client/.../view/*.java` |
+| `PlayView` | `VBox` | `desktop-client/.../view/PlayView.java` (960 lines) |
+| `DashboardView` | `VBox` | `desktop-client/.../view/DashboardView.java` |
+| `HistoryView` | `VBox` | `desktop-client/.../view/HistoryView.java` |
+| `AchievementsView` | `VBox` | `desktop-client/.../view/AchievementsView.java` |
+| `SettingsView` | `VBox` | `desktop-client/.../view/SettingsView.java` |
 | `MainView` | `BorderPane` | `desktop-client/.../view/MainView.java` |
 | `SidebarItem` | `HBox` | `desktop-client/.../view/SidebarItem.java` |
-| `StatCard`, `RunCard`, `AchievementCard`, `BuffCard` | `VBox` | `desktop-client/.../component/*.java` |
+| `StatCard` | `VBox` | `desktop-client/.../component/StatCard.java` |
+| `RunCard` | `VBox` | `desktop-client/.../component/RunCard.java` |
+| `AchievementCard` | `VBox` | `desktop-client/.../component/AchievementCard.java` |
+| `BuffCard` | `VBox` | `desktop-client/.../component/BuffCard.java` |
 | `ChartContainer` | `StackPane` | `desktop-client/.../component/ChartContainer.java` |
+| `Toast` | `HBox` | `desktop-client/.../component/Toast.java` |
 | `PaperCrownApp` | `Application` | `desktop-client/.../PaperCrownApp.java` |
 
-Repository interfaces also inherit from `JpaRepository<T, ID>`, gaining CRUD operations for free.
+#### 1.2 Repository Interface Inheritance
+
+All six repository interfaces extend `JpaRepository<T, ID>`, inheriting `findAll()`, `findById()`, `save()`, `delete()`, `count()`, and pagination/query-by-example support **without writing a single line of implementation code**:
+
+| Interface | Extends | File |
+|-----------|---------|------|
+| `RunRepository` | `JpaRepository<RunEntity, Long>` | `backend-service/.../repository/RunRepository.java` |
+| `RoundRepository` | `JpaRepository<RoundEntity, Long>` | `backend-service/.../repository/RoundRepository.java` |
+| `BuffRepository` | `JpaRepository<BuffEntity, Long>` | `backend-service/.../repository/BuffRepository.java` |
+| `RunBuffRepository` | `JpaRepository<RunBuffEntity, Long>` | `backend-service/.../repository/RunBuffRepository.java` |
+| `AchievementRepository` | `JpaRepository<AchievementEntity, Long>` | `backend-service/.../repository/AchievementRepository.java` |
+| `SettingRepository` | `JpaRepository<SettingEntity, Long>` | `backend-service/.../repository/SettingRepository.java` |
+
+Custom query methods (e.g. `findTopByStatusOrderByCreatedAtDesc(RunStatus)`, `findBySettingKey(String)`) are declared by naming convention and implemented automatically by Spring Data.
+
+#### 1.3 Enum Inheritance
+
+All four shared enums — `Move`, `BuffType`, `RoundOutcome`, `RunStatus` — implicitly extend `java.lang.Enum<E>`, inheriting `name()`, `ordinal()`, `valueOf()`, `values()`, and `compareTo()`.
+
+#### 1.4 JPA Entity Classes
+
+Six `@Entity`-annotated classes (`RunEntity`, `RoundEntity`, `BuffEntity`, `RunBuffEntity`, `AchievementEntity`, `SettingEntity`) inherit object-relational mapping, lifecycle callbacks, and dirty-checking from JPA/Hibernate via class-level annotation — no code duplicated across them.
+
+---
 
 ### 2. Polymorphism
 
-- **Runtime polymorphism via `switch` on enums** — `PlayView.showResult()` (`PlayView.java:177-198`) handles WIN/LOSS/DRAW with different animations; `RunService.submitMove()` (`RunService.java:93-115`) processes each outcome differently
-- **Polymorphic theming via `instanceof`** — `ChartContainer.applyTheme()` (`ChartContainer.java:52-82`) handles `CategoryPlot`, `XYPlot`, and `PiePlot` with distinct styling
-- **Method overriding** — `PaperCrownApp.start()` (`PaperCrownApp.java:14`) overrides `Application.start()` to set up the stage
+#### 2.1 Runtime Polymorphism — Switch on Enums (Behavior Dispatch)
+
+Backend and desktop both use enum-based `switch` to dispatch behavior at runtime:
+
+**Backend (domain logic):**
+
+| Location | Enum | File & Line | What It Distinguishes |
+|----------|------|-------------|----------------------|
+| `RunService.submitMove()` | `RoundOutcome` | `RunService.java:113-131` | WIN → heal, LOSS → check shield/IgnoreLoss → decrement HP, DRAW → check DrawAsWin |
+| `BuffService.applyBuff()` | `effectKey` (String) | `BuffService.java:47-61` | 8 buff effects: +MaxHP, Heal, Shield, DoubleReward, StreakBonus, Reroll, DrawAsWin, IgnoreLoss |
+| `AchievementService.checkAchievements()` | `criteriaType` (String) | `AchievementService.java:62-70` | 6 criteria: TotalWins, RunsCompleted, TotalRounds, RoundsSurvived, WinStreak, RunsWon |
+
+**Desktop (UI rendering):**
+
+| Location | Enum/String | File & Line | What It Distinguishes |
+|----------|-------------|-------------|----------------------|
+| `PlayView.showResult()` | `RoundOutcome` | `PlayView.java:450-477` | Different audio, CSS class, and animation per outcome |
+| `PlayView.updateHistory()` | `RoundOutcome` | `PlayView.java:841-851` | Icon (trophy/skull/minus) and color per round result |
+| `RunCard.createRoundRow()` | `RoundOutcome` | `RunCard.java:77-80` | Unicode symbol (✓/✗/—) per outcome |
+| `SidebarItem.resolveIcon()` | `iconStr` (String) | `SidebarItem.java:20-27` | Maps icon key to Ikonli material design icon |
+| `Toast` constructor | `Toast.Type` (enum) | `Toast.java:26-38` | FontAwesome icon and CSS class per notification type |
+| `DashboardView.createStatCard()` | `label` (String) | `DashboardView.java:149-155` | FontAwesome icon per stat label |
+| `AchievementCard.resolveIcon()` | `iconStr` (String) | `AchievementCard.java:59-71` | Maps icon key to FontAwesome icon |
+| `BuffCard.resolveIcon()` | `iconStr` (String) | `BuffCard.java:52-61` | Maps icon key to FontAwesome icon |
+
+#### 2.2 Runtime Polymorphism — `instanceof` Type Checking
+
+- `ChartContainer.applyTheme()` (`ChartContainer.java:52-82`) — uses `instanceof` to style `CategoryPlot`, `XYPlot`, and `PiePlot` differently (each plot type needs different axis/legend/renderer treatment).
+
+#### 2.3 Interface-Based Polymorphism (Dependency Injection)
+
+Spring injects JDK dynamic proxies for every repository interface at runtime:
+
+- `RunService` constructor receives `RunRepository`, `RoundRepository`, `BuffRepository`, `RunBuffRepository` as interface types — the actual proxy class is generated by Spring Data, completely transparent to the caller.
+- Tests use Mockito `@Mock` to substitute interface implementations without changing production code.
+
+#### 2.4 Compile-Time Polymorphism — Method Overloading
+
+| Class | Overloaded Methods | File & Line | Purpose |
+|-------|--------------------|-------------|---------|
+| `StatCard` | `setValue(String)` / `setValue(int)` / `setValue(double)` | `StatCard.java:48-62` | Accept multiple numeric types; formats doubles with 1 decimal place |
+| `SettingsController` | `updateSetting(String key, String value)` / `updateSettings(Map<String, String>)` | `SettingsController.java:34,39` | Single key-value update vs. batch update |
+| `EntityMapper` | `toRunDTO(RunEntity)` / `toRunSummaryDTO(RunEntity)` | `EntityMapper.java:14,41` | Full DTO (with rounds+buffs) vs. summary-only DTO |
+| `Toast` | `show(parent, text, type)` / `show(parent, text, type, duration)` | `Toast.java:46,50` | Default 4s display vs. custom display duration |
+| `BackendClient` | `get(String)` / `get(String, Class<T>)` | `BackendClient.java:106,124` | Raw JSON string vs. deserialized typed response |
+
+---
 
 ### 3. Encapsulation
 
-- **Private fields with public accessors** — All DTOs and JPA entities use `private` fields exposed through getters/setters (e.g., `RunEntity.java:12-93`, `MoveRequest.java:7-17`, `MoveResponse.java:8-35`)
-- **Hidden implementation details** — `BackendClient` (`BackendClient.java:18-172`) encapsulates HTTP client, JSON serialization, and connection logic behind a clean API (`startRun()`, `submitMove()`, `getStats()`)
-- **ViewModel hides threading** — `PlayViewModel` (`PlayViewModel.java:18-125`) runs HTTP calls on a private executor, updates JavaFX properties on the UI thread — callers never see threads or HTTP
+#### 3.1 Private Fields with Accessors
+
+**All 6 JPA entities** follow the JavaBean encapsulation contract:
+
+| Entity | Private Fields | Getter/Setter Pairs | File & Lines |
+|--------|----------------|-------------------|--------------|
+| `RunEntity` | 11 fields (id, status, currentHp, maxHp, roundNumber, totalWins, totalLosses, totalDraws, shield, createdAt, endedAt) + 2 collections | 13 pairs | `RunEntity.java:15-93` |
+| `RoundEntity` | 6 fields (id, run, roundNumber, playerMove, botMove, outcome, createdAt) | 7 pairs | `RoundEntity.java:12-62` |
+| `BuffEntity` | 6 fields (id, name, description, buffType, effectKey, icon) | 6 pairs | `BuffEntity.java:10-51` |
+| `RunBuffEntity` | 5 fields (id, run, buff, appliedAt, usedAt, consumed) | 6 pairs | `RunBuffEntity.java:10-51` |
+| `AchievementEntity` | 8 fields (id, name, description, icon, criteriaType, criteriaValue, unlocked, unlockedAt, progress) | 9 pairs | `AchievementEntity.java:9-68` |
+| `SettingEntity` | 3 fields (id, settingKey, settingValue) | 3 pairs | `SettingEntity.java:10-31` |
+
+**All 8 shared DTOs** (`MoveRequest`, `MoveResponse`, `RunDTO`, `RoundDTO`, `BuffDTO`, `AchievementDTO`, `StatsDTO`, `SettingDTO`) also use private fields exposed exclusively through getters and setters — no public fields anywhere in the shared module.
+
+#### 3.2 Package-Private Internals (Test Seams)
+
+| Class | Method | File & Line | Visibility |
+|-------|--------|-------------|------------|
+| `GameEngine` | `setRandomForTesting(Random)` | `GameEngine.java:33` | Package-private — only accessible within `com.papercrown.backend.service` (production code + tests) |
+| `BuffService` | `setRandomForTesting(Random)` | `BuffService.java:70` | Package-private — same pattern for deterministic test runs |
+
+Both expose deterministic randomness to tests while **hiding test-seeding from the public API** — callers from other packages cannot inject randomness.
+
+#### 3.3 Hidden Implementation Complexity
+
+| Class | Encapsulates | File & Lines |
+|-------|-------------|--------------|
+| `BackendClient` | HTTP connection timeout config, `HttpClient` lifecycle, JSON serialization/deserialization, HTTP status code interpretation, typed response parsing — all inside private `get()`, `post()`, `put()` methods. Callers see only `startRun()`, `submitMove()`, `selectBuff()`, `getStats()`. | `BackendClient.java:106-179` |
+| `ChartContainer` | Swing-JavaFX interop (`SwingNode`), `JFreeChart` construction, dark-theme application across plot types, font/color/padding configuration — all internal. Exposes a clean JavaFX `Node` to layout code. | `ChartContainer.java:15-114` |
+| `AudioManager` | Sound file loading from resources, `javafx.scene.media.MediaPlayer` pooling, volume management, playback status caching — all private. Only `play()`, `setSoundEnabled()`, `setMasterVolume()` are public. | `AudioManager.java:11-64` |
+| `StatsService` | Run aggregation, win-rate computation, best-strike calculation, move-usage counting across multiple runs — `getStats()` returns a clean `StatsDTO`. No raw entities leak to callers. | `StatsService.java:27-74` |
+| `PlayViewModel` | Private `ExecutorService` for async HTTP calls, `Platform.runLater()` for JavaFX thread updates, observable-property wiring — callers bind UI to `StringProperty`/`BooleanProperty` without knowing about threads or HTTP. | `PlayViewModel.java:18-125` |
+
+---
 
 ### 4. Abstraction
 
-- **Game rules abstracted** — `GameEngine` (`GameEngine.java:11-36`) hides the RPS resolution logic behind `resolve(Move, Move)` and `randomBotMove()` — services use it without knowing the win map or random implementation
-- **Data access abstracted** — `RunRepository` (`RunRepository.java:12`) declares `findTopByStatusOrderByCreatedAtDesc(RunStatus)` — Spring Data generates the SQL automatically
-- **Entity-DTO mapping abstracted** — `EntityMapper` (`EntityMapper.java:11-106`) provides `toRunDTO()`, `toRoundDTO()`, etc. Services call it without knowing mapping details
+#### 4.1 Repository Pattern (Data Access Abstraction)
+
+Spring Data JPA generates implementation at runtime from method-name convention. The developer declares **what** data to query — never **how**:
+
+| Repository | Custom Query Methods Declared | File & Line |
+|------------|-------------------------------|-------------|
+| `RunRepository` | `findTopByStatusOrderByCreatedAtDesc(RunStatus)`, `findByStatus(RunStatus)`, `countByStatus(RunStatus)` | `RunRepository.java:13-20` |
+| `RoundRepository` | `findByRunIdOrderByRoundNumberAsc(Long)`, `findByRunId(Long)` | `RoundRepository.java:12-16` |
+| `BuffRepository` | `findByBuffType(BuffType)`, `findByEffectKey(String)` | `BuffRepository.java:8-13` |
+| `RunBuffRepository` | `findByRunIdAndConsumedFalse(Long)` | `RunBuffRepository.java:10-13` |
+| `AchievementRepository` | (inherits all from JpaRepository) | `AchievementRepository.java:10` |
+| `SettingRepository` | `findBySettingKey(String)` | `SettingRepository.java:10-12` |
+
+#### 4.2 Service Layer (Business Logic Abstraction)
+
+Six services hide their own domain complexity behind clean method signatures:
+
+| Service | Responsibility | Key Public Methods | File & Lines |
+|---------|---------------|-------------------|--------------|
+| `GameEngine` | Core RPS resolution rules | `resolve(Move, Move) → RoundOutcome`, `randomBotMove() → Move` | `GameEngine.java:11-36` |
+| `RunService` | Full run lifecycle orchestration | `startRun()`, `submitMove()`, `selectBuff()`, `abandonRun()`, `getUnfinishedRun()` | `RunService.java:19-217` |
+| `BuffService` | Buff catalog + effect resolution | `getRandomBuffChoice()`, `applyBuff()` | `BuffService.java:18-70` |
+| `AchievementService` | Multi-criteria progress + unlock detection | `getAllAchievements()`, `checkAchievements()` | `AchievementService.java:22-107` |
+| `StatsService` | Aggregate statistics across runs | `getStats() → StatsDTO` | `StatsService.java:17-74` |
+| `SettingsService` | Key-value configuration | `getSettings()`, `getSetting()`, `updateSetting()`, `updateSettings()` | `SettingsService.java:16-62` |
+
+Callers (controllers, desktops) use these services without needing to understand RPS win maps, buff effect side-effects, or database queries.
+
+#### 4.3 Controller Layer (REST API Abstraction)
+
+Five controllers expose clean REST endpoints. They delegate to services and never contain business logic:
+
+| Controller | Endpoints | File & Lines |
+|------------|-----------|--------------|
+| `RunController` | `POST /api/runs`, `POST /api/runs/{id}/round`, `POST /api/runs/{id}/buff`, `GET /api/runs/unfinished`, `DELETE /api/runs/{id}` | `RunController.java:16-74` |
+| `StatsController` | `GET /api/stats` | `StatsController.java:12-24` |
+| `AchievementController` | `GET /api/achievements` | `AchievementController.java:14-26` |
+| `SettingsController` | `GET /api/settings`, `GET /api/settings/{key}`, `PUT /api/settings`, `PUT /api/settings/{key}` | `SettingsController.java:11-47` |
+| `HealthController` | `GET /api/health` | `HealthController.java:10-16` |
+
+#### 4.4 Entity-DTO Mapping Abstraction
+
+`EntityMapper` provides typed conversion methods (`toRunDTO(RunEntity)`, `toRunSummaryDTO(RunEntity)`, `toRoundDTO(RoundEntity)`, `toBuffDTO(BuffEntity)`, `toAchievementDTO(AchievementEntity)`) — services and controllers call these without dealing with JPA entity internals, `@OneToMany` collections, or lazy-loading concerns.
+
+---
 
 ### 5. Error Handling & Exceptions
 
-**Backend (service layer throws, handler catches):**
+#### 5.1 Centralized Global Exception Handler
 
-- `RunService.java:52` — `throw new IllegalStateException("An unfinished run already exists")` — prevents duplicate concurrent runs
-- `RunService.java:70,82,143-147` — `.orElseThrow(() -> new NoSuchElementException(...))` — entity-not-found errors
-- `RunService.java:85` — `throw new IllegalStateException("Run is already completed")` — invalid state for move submission
-- `GlobalExceptionHandler.java:14-36` — `@ControllerAdvice` maps exceptions to HTTP status codes (404, 409, 400, 500) — centralized error handling, no try/catch in controllers
+`GlobalExceptionHandler` (`backend-service/.../exception/GlobalExceptionHandler.java:12-38`) uses `@ControllerAdvice` to intercept exceptions from **all** controllers at a single location. No controller contains try-catch blocks:
 
-**Desktop (graceful degradation):**
+| `@ExceptionHandler` | Java Exception | → HTTP Status | Lines |
+|---------------------|----------------|---------------|-------|
+| `handleNotFound` | `NoSuchElementException` | 404 NOT_FOUND | 14-18 |
+| `handleBadState` | `IllegalStateException` | 409 CONFLICT | 20-24 |
+| `handleBadArgument` | `IllegalArgumentException` | 400 BAD_REQUEST | 26-30 |
+| `handleGeneral` | `Exception` (catch-all) | 500 INTERNAL_SERVER_ERROR | 32-37 |
 
-- `PlayViewModel.java:64-65` — catches network errors and sets an observable `error` flag for the UI to display
-- `PlayViewModel.java:53,81` — silently catches non-critical failures
-- `PlayViewModel.java:66-68` — `finally` block always resets `loading` state
-- `BackendClient.java:110-112,148,166-168` — wraps HTTP failures in `RuntimeException` with descriptive messages
-- `BackendClient.java:33-41` — graceful degradation: `isHealthy()` returns `false` instead of crashing
+Each handler returns a JSON body `{"error": "…message…"}`. No custom exception subclasses are needed — standard `java.lang` exceptions with descriptive messages suffice.
 
-### 6. JavaFX GUI (MVVM Pattern)
+#### 5.2 Explicit Exception Throwing (Business Rules)
 
-The user interface is built programmatically (no FXML) using the **MVVM (Model-View-ViewModel)** pattern:
+| Location | Exception | Condition | File & Line |
+|----------|-----------|-----------|-------------|
+| `RunService.startRun()` | `IllegalStateException` | An unfinished run already exists | `RunService.java:52` |
+| `RunService.getRunById()` | `NoSuchElementException` | Run ID not found (via `.orElseThrow()`) | `RunService.java:80` |
+| `RunService.submitMove()` | `NoSuchElementException` | Run ID not found | `RunService.java:92` |
+| `RunService.submitMove()` | `IllegalStateException` | Run is already completed | `RunService.java:95` |
+| `RunService.submitMove()` | `IllegalArgumentException` | Player move is null | `RunService.java:99` |
+| `RunService.selectBuff()` | `NoSuchElementException` | Run or buff ID not found | `RunService.java:167-171` |
+| `RunService.abandonRun()` | `NoSuchElementException` | Run ID not found | `RunService.java:200` |
+| `BuffService.applyBuff()` | `IllegalArgumentException` | Unknown buff effectKey | `BuffService.java:62` |
+
+These exceptions propagate to `GlobalExceptionHandler` without any intermediate catching — clean separation between throwing (services) and handling (global handler).
+
+#### 5.3 Desktop Client — Graceful Degradation
+
+All ViewModels catch backend failures to prevent crashes and keep the UI responsive:
+
+| Location | Behavior | File & Line |
+|----------|----------|-------------|
+| `BackendClient.isHealthy()` | Returns `false` on any exception — no crash | `BackendClient.java:34-41` |
+| `BackendClient.getUnfinishedRun()` | Returns `null` on failure — UI shows "no active run" | `BackendClient.java:49-53` |
+| `BackendClient.get()` | Wraps `IOException`/`InterruptedException` in `RuntimeException` with status code | `BackendClient.java:107-121` |
+| `BackendClient.post()` | Wraps HTTP failures and JSON parse errors in `RuntimeException` | `BackendClient.java:140-158` |
+| `BackendClient.put()` | Wraps non-2xx responses in `RuntimeException` | `BackendClient.java:166-174` |
+| `PlayViewModel.startNewRun()` | Catches errors and sets observable `error` property for UI display | `PlayViewModel.java:64-65` |
+| `PlayViewModel.submitMove()` | Catches failures silently (retry on next user action) | `PlayViewModel.java:53,81` |
+| `PlayViewModel.startNewRun()` | `finally` block always resets `loading` — UI never gets stuck | `PlayViewModel.java:66-68` |
+
+---
+
+### 6. Design Patterns
+
+#### 6.1 MVVM (Model-View-ViewModel)
+
+The desktop client follows MVVM with **no FXML** — all UI is built programmatically:
 
 | Layer | Role | Key Classes |
 |-------|------|-------------|
-| **View** | Builds layout, binds to observable properties, handles animations | `MainView`, `PlayView`, `DashboardView`, `HistoryView`, `AchievementsView`, `SettingsView` |
-| **ViewModel** | Exposes observable state, abstracts backend calls, manages async operations | `PlayViewModel`, `DashboardViewModel`, `HistoryViewModel`, `AchievementsViewModel`, `SettingsViewModel` |
-| **Model** | Backend REST API | `BackendClient`, Spring Boot services |
+| **Model** | Data + backend communication | `BackendClient`, shared DTOs, Spring Boot services |
+| **View** | Layout construction, CSS, animations, property binding | `MainView`, `PlayView`, `DashboardView`, `HistoryView`, `AchievementsView`, `SettingsView` |
+| **ViewModel** | Observable JavaFX properties, async operation management, state mutation | `PlayViewModel`, `DashboardViewModel`, `HistoryViewModel`, `AchievementsViewModel`, `SettingsViewModel` |
+
+Views bind directly to ViewModel properties (e.g. `textProperty().bind(viewModel.messageProperty())`) and never call backend methods directly. ViewModels never reference UI classes — they only expose `StringProperty`/`BooleanProperty`/`ObjectProperty`.
+
+#### 6.2 Repository Pattern
+
+Six Spring Data `JpaRepository` implementations abstract all database access. Services declare dependencies on interfaces — Spring injects runtime proxy implementations. This decouples business logic from persistence.
+
+#### 6.3 Dependency Injection (IoC)
+
+`RunService` constructor (`RunService.java:34-38`) receives `RunRepository`, `RoundRepository`, `BuffRepository`, `RunBuffRepository`, `GameEngine`, `BuffService`, `AchievementService`, `StatsService` — all injected by Spring. No `new` keyword for dependencies. This enables:
+- Unit testing with Mockito mocks
+- Swapping implementations without changing service code
+- Lifecycle management delegated to the Spring container
+
+#### 6.4 Observable/Observer (via JavaFX Properties)
+
+All ViewModels expose 4–14 `public final` JavaFX properties (`StringProperty`, `BooleanProperty`, `IntegerProperty`, `ObjectProperty`, `ListProperty`). Views bind their text, visibility, and style properties to these observables, receiving automatic updates when the ViewModel changes state. This is the JavaFX-native implementation of the Observer pattern.
+
+#### 6.5 Strategy (via Enum Switch Dispatch)
+
+`BuffService.applyBuff()` uses a `switch` on the buff `effectKey` string to select the correct strategy for each buff type (heal, shield, max-hp-up, etc.). Each `case` block implements a different algorithm — same interface, interchangeable behavior at runtime.
+
+---
+
+### 7. JavaFX GUI (Programmatic, No FXML)
 
 **Reusable components** (`desktop-client/.../component/`):
-- `StatCard` — stats display with pseudo-class accent colors
-- `RunCard` — collapsible run entry with round details
-- `AchievementCard` — three visual states (unlocked, in-progress, locked)
-- `BuffCard` — buff selection card with hover animation
-- `ChartContainer` — JFreeChart wrapper with SwingNode and dark theming
-- `Toast` — animated notification sliding in from the right
 
-**Animations** — Scalable win effect, shake on loss, fade transitions between pages, staggered card entrance.
+| Component | Description |
+|-----------|-------------|
+| `StatCard` | Numeric stat display with icon, accent colors, and CSS pseudo-classes. Overloaded `setValue()` accepts `String`, `int`, or `double`. |
+| `RunCard` | Expandable/collapsible run entry showing rounds, outcomes, buffs, and HP trajectory. |
+| `AchievementCard` | Three visual states — unlocked (full color), in-progress (dimmed + progress bar), locked (greyed out + lock icon). |
+| `BuffCard` | Buff selection card with icon, name, description, hover scale animation, and click handler. |
+| `ChartContainer` | Wraps JFreeChart in a `SwingNode` for JavaFX embedding. Accepts any `JFreeChart`, applies dark theme via `instanceof` on plot type. |
+| `Toast` | Animated notification sliding in from the right edge with auto-dismiss after configurable duration. |
 
-**Styling** — 491-line dark fantasy theme (`main.css`) with root CSS variables, pseudo-classes, and hover states.
+**Animations** — Win celebration (scalable particle burst), shake on loss, fade-in page transitions, staggered card entrance via sequential `TranslateTransition` + `FadeTransition`.
+
+**Styling** — Integrated dark fantasy theme with root CSS variables, pseudo-classes for interactive states, and hover transitions.
 
 ## Game Rules
 
